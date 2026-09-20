@@ -8,11 +8,16 @@ public class Escopeta extends Arma {
     private int cartuchos;
     private float dispersion;
 
-    public Escopeta(String nombre, float precio, int daño, float peso, int municionMax,
+    public Escopeta(String nombre, float precio, int dano, float peso, int municionMax,
                      int cartuchos, float dispersion) {
-        super(nombre, precio, daño, peso, municionMax);
+        super(nombre, precio, dano, peso, municionMax);
         this.cartuchos = cartuchos;
         this.dispersion = dispersion;
+    }
+    
+    @Override
+    public String describirComportamiento() {
+    	return "Disparo de perdigones de alto impacto a quemarropa con dispersión de " + dispersion + "%.";
     }
 
     public int getCartuchos() {

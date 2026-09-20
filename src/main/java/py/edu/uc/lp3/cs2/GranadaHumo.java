@@ -6,8 +6,8 @@ package py.edu.uc.lp3.cs2;
  */
 public class GranadaHumo extends Granada {
 
-    public GranadaHumo(String nombre, float precio, int daño, float peso, int municionMax,
+    public GranadaHumo(String nombre, float precio, int dano, float peso, int municionMax,
                         float radioExplosion) {
-        super(nombre, precio, daño, peso, municionMax, GranadaTipo.HUMO, radioExplosion);
+        super(nombre, precio, dano, peso, municionMax, GranadaTipo.HUMO, radioExplosion);
     }
 }

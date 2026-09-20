@@ -8,19 +8,38 @@ public abstract class Arma {
 
     protected String nombre;
     protected float precio;
-    protected int daño;
+    protected int dano;
     protected float peso;
     protected int municionMax;
     protected int municionActual;
 
-    public Arma(String nombre, float precio, int daño, float peso, int municionMax) {
+    public Arma(String nombre, float precio, int dano, float peso, int municionMax) {
+        if (nombre == null || nombre.isBlank()) {
+        	throw new IllegalArgumentException("El nombre del arma no puede estar vacío!");
+        }
+        if (precio < 0) {
+        	throw new IllegalArgumentException("El precio no puede ser negativo!");
+        }
+        if (dano <= 0) {
+        	throw new IllegalArgumentException("El dano debe ser mayor a cero!");
+        }
+        if (municionMax < 0) {
+        	throw new IllegalArgumentException("La munición no puede ser negativa!");
+        }
+        
         this.nombre = nombre;
         this.precio = precio;
-        this.daño = daño;
+        this.dano = dano;
         this.peso = peso;
         this.municionMax = municionMax;
         this.municionActual = municionMax;
     }
+    
+    /**
+     * Mensaje polimórfico abstracto. Cada tipo de arma debe informar
+     * su comportamiento específico según sus mecánicas en CS2.
+     */
+     public abstract String describirComportamiento();
 
     /**
      * Ejecuta el disparo del arma, consumiendo una unidad de munición si es posible.
@@ -60,12 +79,12 @@ public abstract class Arma {
         this.precio = precio;
     }
 
-    public int getDaño() {
-        return daño;
+    public int getDano() {
+        return dano;
     }
 
-    public void setDaño(int daño) {
-        this.daño = daño;
+    public void setDano(int dano) {
+        this.dano = dano;
     }
 
     public float getPeso() {
@@ -98,7 +117,7 @@ public abstract class Arma {
 
     @Override
     public String toString() {
-        return nombre + " [precio=" + precio + ", daño=" + daño + ", peso=" + peso
+        return nombre + " [precio=" + precio + ", dano=" + dano + ", peso=" + peso
                 + ", munición=" + municionActual + "/" + municionMax + "]";
     }
 }

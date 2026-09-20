@@ -7,9 +7,17 @@ public class Francotirador extends Arma {
 
     private int zoom;
 
-    public Francotirador(String nombre, float precio, int daño, float peso, int municionMax, int zoom) {
-        super(nombre, precio, daño, peso, municionMax);
+    public Francotirador(String nombre, float precio, int dano, float peso, int municionMax, int zoom) {
+        super(nombre, precio, dano, peso, municionMax);
+        if (zoom <= 0) {
+        	throw new IllegalArgumentException("El nivel de aumento del zoom debe ser mayor a cero!");
+        }
         this.zoom = zoom;
+    }
+    
+    @Override
+    public String describirComportamiento() {
+    	return "Disparo de precisión letal a larga distancia utilizando mira telescópica con zoom óptico x" + zoom + " y alta penalización de movimiento al disparar sin apuntar.";
     }
 
     /**

@@ -9,9 +9,9 @@ public class Granada extends Arma {
     protected GranadaTipo tipoGranada;
     protected float radioExplosion;
 
-    public Granada(String nombre, float precio, int daño, float peso, int municionMax,
+    public Granada(String nombre, float precio, int dano, float peso, int municionMax,
                     GranadaTipo tipoGranada, float radioExplosion) {
-        super(nombre, precio, daño, peso, municionMax);
+        super(nombre, precio, dano, peso, municionMax);
         this.tipoGranada = tipoGranada;
         this.radioExplosion = radioExplosion;
     }
@@ -27,6 +27,11 @@ public class Granada extends Arma {
         } else {
             System.out.println("No quedan granadas de tipo " + nombre + " para lanzar.");
         }
+    }
+    
+    @Override
+    public String describirComportamiento() {
+    	return "Proyectil arrojadizo de tipo " + tipoGranada + " con radio de efecto de " + radioExplosion + " metros.";
     }
 
     public GranadaTipo getTipoGranada() {
