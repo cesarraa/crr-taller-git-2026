@@ -1,13 +1,16 @@
-package py.edu.uc.lp3.cs2;
+package py.edu.uc.lp3.domain;
 
 /**
- * Especialización de Granada de tipo flash (cegadora).
- * No agrega atributos ni métodos propios respecto al diagrama.
+ * Especialización de Granada cegadora (Flashbang).
  */
 public class GranadaFlash extends Granada {
 
     public GranadaFlash(String nombre, float precio, int dano, float peso, int municionMax,
-                         float radioExplosion) {
+                        float radioExplosion) {
         super(nombre, precio, dano, peso, municionMax, GranadaTipo.FLASH, radioExplosion);
+    }
+
+    public GranadaFlash() {
+        super("Flashbang", 200f, 1, GranadaTipo.FLASH);
     }
 }
