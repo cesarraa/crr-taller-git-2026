@@ -5,7 +5,7 @@
 **Alumno:** César Ramírez Román  
 **Usuario de GitHub:** `cesarraa`  
 **Repositorio GitHub:** `https://github.com/cesarraa/crr-taller-git-2026`  
-**Enlace al Commit de la Solución:** `https://github.com/cesarraa/crr-taller-git-2026/commit/{HASH_COMMIT_AQUI}`  
+**Enlace al Commit de la Solución:** https://github.com/cesarraa/crr-taller-git-2026/commit/62066c81e70ff5432d503aabdc4122af595ff1e7  
 
 ---
 

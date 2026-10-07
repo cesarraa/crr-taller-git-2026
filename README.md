@@ -9,7 +9,7 @@ Licencia: **Apache License 2.0** (ver archivo [LICENSE](LICENSE)).
 
 ## Enlace al Commit de la Solución
 
-- **Commit de la entrega:** `https://github.com/cesarraa/crr-taller-git-2026/commit/{HASH_COMMIT_AQUI}`
+- **Commit de la entrega:** https://github.com/cesarraa/crr-taller-git-2026/commit/62066c81e70ff5432d503aabdc4122af595ff1e7
 
 ---
 
