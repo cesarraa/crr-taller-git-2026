@@ -21,8 +21,8 @@ Siguiendo estrictamente las especificaciones del template de la cátedra ([lp3-t
 src/main/java/py/edu/uc/lp3/
 ├── Cs2Application.java                     # Arranque de Spring Boot (@SpringBootApplication)
 ├── domain/                                 # Clases de dominio del modelo de CS2
-│   ├── Arma.java                           # Clase base abstracta
-│   ├── Francotirador.java                  # Especialización de Arma
+│   ├── Arma.java                           # Clase base abstracta (Familia Arma)
+│   ├── Francotirador.java                  # Especialización de Arma e implementa UICapable (reemplaza default)
 │   ├── Pistola.java                        # Especialización de Arma
 │   ├── Escopeta.java                       # Especialización de Arma
 │   ├── Subfusil.java                       # Especialización de Arma
@@ -30,10 +30,13 @@ src/main/java/py/edu/uc/lp3/
 │   ├── GranadaFlash.java                   # Especialización de Granada
 │   ├── GranadaHumo.java                    # Especialización de Granada
 │   ├── GranadaIncendiaria.java             # Especialización de Granada
-│   └── GranadaTipo.java                    # Enum de tipos de granada
+│   ├── GranadaTipo.java                    # Enum de tipos de granada
+│   ├── Jugador.java                        # Familia independiente e implementa UICapable (usa default)
+│   └── UICapable.java                      # Interface del dominio con mensaje de texto y default method
 └── rest/controller/                        # Capa de presentación REST (Servicios HTTP)
     ├── IndexController.java                # GET /
-    └── ArmaController.java                 # GET /armas/construir, /armas/comportamientos, /armas/disparar
+    ├── ArmaController.java                 # GET /armas/construir, /armas/comportamientos, /armas/disparar
+    └── UIController.java                   # GET /ui/elementos, /ui/renderizar (consumo vía interfaz)
 ```
 
 ---
@@ -130,6 +133,28 @@ classDiagram
         INCENDIARIA
     }
 
+    class UICapable {
+        <<interface>>
+        +renderizarUI() String$
+        +getImagen() String$
+        +getPosicion() String$
+        +getSonido() String$
+        +getVelocidad() String$
+    }
+
+    class Jugador {
+        -String alias
+        -String bando
+        -int salud
+        -int dinero
+        +Jugador()
+        +Jugador(alias, bando, salud, dinero)
+        +getImagen() String
+        +getPosicion() String
+        +recibirDanio(cantidad) void
+        +estaVivo() boolean
+    }
+
     Arma <|-- Pistola
     Arma <|-- Francotirador
     Arma <|-- Escopeta
@@ -139,6 +164,8 @@ classDiagram
     Granada <|-- GranadaHumo
     Granada <|-- GranadaIncendiaria
     Granada --> GranadaTipo
+    UICapable <|.. Francotirador : implementa (reemplaza default)
+    UICapable <|.. Jugador : implementa (usa default)
 ```
 
 ---
@@ -187,18 +214,60 @@ La **sobreescritura** ocurre cuando una clase hija redefine un método de la cla
 
 ---
 
-## 4. Ocultamiento de la Información e Invariantes
+---
+
+## 4. Interfaces y Métodos por Defecto (`default` methods)
+
+En cumplimiento de la consigna de la cátedra para el taller de interfaces:
+> *"Elegí una capacidad que compartan dos clases de tu modelo, y que esas dos clases estén en familias distintas.*  
+> *Declarala como interface en domain, con un mensaje que devuelva texto.*  
+> *Cada clase la implementa a su modo. Una de las dos puede reemplazar un default.*  
+> *Un servicio REST pide ese mensaje a través del tipo de la interfaz y responde JSON.*  
+> *Minecraft o Counter-Strike 2, el que ya venís modelando. El ejemplo de la pizarra es para mirar la forma:*  
+> *`UICapable { imagen; posicion; sonido; velocidad; }`"*
+
+### 4.1. Declaración de la Interfaz en `domain`
+Se definió la interface `py.edu.uc.lp3.domain.UICapable` que modela la capacidad de cualquier elemento del juego para renderizarse en la interfaz de usuario (HUD, radar, inventario) de CS2:
+- **Mensaje que devuelve texto:** `String renderizarUI()`
+- **Implementación por defecto (`default` method):** La interface provee una implementación base de `renderizarUI()` que concatena los atributos gráficos y de audio (`getImagen()`, `getPosicion()`, `getSonido()`, `getVelocidad()`).
+
+### 4.2. Dos Clases en Familias Distintas
+1. **Familia Arma (`Francotirador`):**
+   - Pertenece a la jerarquía de herencia de `Arma` (`Francotirador extends Arma implements UICapable`).
+   - **Reemplaza el default (`@Override`):** Redefine completamente `renderizarUI()` para mostrar el visor táctico de mira óptica (`awp_scope.png`), nivel de magnificación (`x2`), slot inferior derecho del HUD y estado en tiempo real de munición.
+2. **Familia Jugador (`Jugador`):**
+   - Pertenece a una jerarquía independiente (`Jugador implements UICapable`), completamente desacoplada de `Arma`.
+   - **Aprovecha el default:** No sobreescribe `renderizarUI()`, consumiendo directamente la implementación por defecto provista por la interfaz `UICapable`, personalizando únicamente el icono de radar (`assets/ui/radar/dot_ct.png`) y su posición en pantalla.
+
+### 4.3. Consumo REST a través del Tipo de la Interfaz
+En `UIController` (`py.edu.uc.lp3.rest.controller.UIController`), los elementos se manipulan exclusivamente mediante referencias del tipo `UICapable`:
+```java
+List<UICapable> elementos = List.of(
+    new Jugador("s1mple", "Antiterrorista", 100, 16000),
+    new Francotirador("AWP", 4750f, 115, 4.3f, 10, 2)
+);
+
+for (UICapable elemento : elementos) {
+    // Se pide el mensaje polimórfico a través del tipo de la interfaz:
+    String textoUI = elemento.renderizarUI();
+}
+```
+
+---
+
+## 5. Ocultamiento de la Información e Invariantes
 
 > **Pregunta de anclaje de la rúbrica:** *¿Qué ocurre si el controller asigna a mano la vida o la munición? ¿Puede otra clase dejar el objeto en un estado imposible?*
 
 - **Respuesta:** No, es imposible. Los atributos de las clases son `protected` y `private`.
-- No existen setters públicos que permitan alterar libremente `municionActual`.
-- La munición solo puede alterarse a través de los mensajes del dominio: `disparar()` (que decrementa la munición validando que sea mayor a cero) y `recargar()` (que restaura el cargador hasta el tope máximo).
-- Todos los constructores y setters restantes validan sus invariantes (lanzando `IllegalArgumentException` si precio < 0, daño ≤ 0, zoom ≤ 0, etc.).
+- No existen setters públicos que permitan alterar libremente `municionActual` o la `salud` de un jugador.
+- La munición solo puede alterarse a través de los mensajes del dominio: `disparar()` y `recargar()`.
+- La salud de `Jugador` solo se reduce a través de `recibirDanio(cantidad)`, impidiendo valores negativos o superiores a 100.
+- Todos los constructores y setters validan invariantes lanzando `IllegalArgumentException` ante parámetros inconsistentes.
 
 ---
 
-## 5. Instrucciones de Ejecución y Pruebas
+## 6. Instrucciones de Ejecución y Pruebas
 
 ### Arrancar el Microservicio
 
@@ -212,70 +281,56 @@ El servicio iniciará en el puerto local `8080`.
 
 #### 1. Confirmar estado del servicio (`GET /`)
 ```bash
-curl -i http://localhost:8080/
-```
-Respuesta esperada (HTTP 200):
-```json
-{
-  "status": "UP",
-  "servicio": "Microservicio Spring Boot - Taller Git y POO",
-  "autor": "César Ramírez Román",
-  "asignatura": "Lenguajes de Programación 3 (CYT646)",
-  "dominio": "Counter-Strike 2 (CS2)",
-  "paquetes": "py.edu.uc.lp3.domain / py.edu.uc.lp3.rest.controller",
-  "mecanismosPOO": "Sobrecarga (constructores y disparar) y Sobreescritura (describirComportamiento)"
-}
+curl -s http://localhost:8080/ | jq .
 ```
 
-#### 2. Construcción con Constructor Simple desde URL
+#### 2. Listar Elementos UI polimórficamente (`GET /ui/elementos`)
+Demuestra el consumo polimórfico de clases en familias distintas (`Jugador` y `Francotirador`) tratadas como `UICapable`, evidenciando el uso y reemplazo del `default`:
 ```bash
-curl -i "http://localhost:8080/armas/construir?tipo=francotirador&nombre=AWP&precio=4750&dano=115&zoom=2"
+curl -s http://localhost:8080/ui/elementos | jq .
 ```
-
-#### 3. Construcción con Constructor Sobrecargado desde URL
-```bash
-curl -i "http://localhost:8080/armas/construir?tipo=francotirador&nombre=AWP&precio=4750&dano=115&peso=4.3&municionMax=10&zoom=2"
-```
-
-#### 4. Rechazo de Invariante Violada (HTTP 400 Bad Request)
-```bash
-curl -i "http://localhost:8080/armas/construir?tipo=francotirador&nombre=AWP&precio=-100&dano=115"
-```
-Respuesta esperada:
-```json
-{
-  "status": "RECHAZADO",
-  "error": "Regla de invariante rota: el dominio rechazó la construcción.",
-  "detalle": "El precio no puede ser negativo."
-}
-```
-
-#### 5. Listado Polimórfico de Comportamientos Sobreescritos
-```bash
-curl -i http://localhost:8080/armas/comportamientos
-```
-Respuesta esperada:
+Respuesta JSON:
 ```json
 [
   {
-    "tipoClaseHija": "Pistola",
-    "nombre": "Desert Eagle",
-    "precio": 700,
-    "comportamiento": "Pistola Desert Eagle: arma secundaria para combate a corta distancia en modo Semiautomático con ciclo rápido de recarga para 7 balas."
+    "clase": "Jugador",
+    "familia": "Familia Jugador (Personaje/Entidad)",
+    "tipoInterfaz": "py.edu.uc.lp3.domain.UICapable",
+    "reemplazaMetodoDefault": false,
+    "mensajeUI": "Renderizado HUD genérico CS2 [imagen='assets/ui/radar/dot_ct.png', posicion='HUD_RADAR_TOP_LEFT (x: 50, y: 50)', sonido='sounds/ui/hud_beep.wav', velocidad='1.0x (60 FPS)']",
+    "imagen": "assets/ui/radar/dot_ct.png",
+    "posicion": "HUD_RADAR_TOP_LEFT (x: 50, y: 50)",
+    "sonido": "sounds/ui/hud_beep.wav",
+    "velocidad": "1.0x (60 FPS)"
   },
   {
-    "tipoClaseHija": "Francotirador",
-    "nombre": "AWP",
-    "precio": 4750,
-    "comportamiento": "Francotirador AWP: disparo quirúrgico letal a larga distancia utilizando mira telescópica con zoom óptico x2 y penalización severa de precisión al disparar sin fijar mira."
+    "clase": "Francotirador",
+    "familia": "Familia Arma (Balística)",
+    "tipoInterfaz": "py.edu.uc.lp3.domain.UICapable",
+    "reemplazaMetodoDefault": true,
+    "mensajeUI": "HUD Francotirador [AWP] -> Imagen: 'assets/ui/weapons/awp_scope.png' | Posición: 'HUD_BOTTOM_RIGHT (x: 1820, y: 980)' | Sonido: 'sounds/weapons/sniper_zoom.wav' | Velocidad: '0.85x (animación lenta de mira)' | Zoom óptico: x2 | Munición en pantalla: 10/10",
+    "imagen": "assets/ui/weapons/awp_scope.png",
+    "posicion": "HUD_BOTTOM_RIGHT (x: 1820, y: 980)",
+    "sonido": "sounds/weapons/sniper_zoom.wav",
+    "velocidad": "0.85x (animación lenta de mira)"
   }
 ]
 ```
 
-#### 6. Prueba de Sobrecarga del Mensaje `disparar`
-- Disparo simple: `curl "http://localhost:8080/armas/disparar"`
-- Disparo a distancia: `curl "http://localhost:8080/armas/disparar?distancia=60"`
-- Disparo a la cabeza: `curl "http://localhost:8080/armas/disparar?distancia=60&headshot=true"`
+#### 3. Renderizar Elemento Individual vía Interfaz (`GET /ui/renderizar`)
+- Francotirador (reemplaza default):
+  ```bash
+  curl -s "http://localhost:8080/ui/renderizar?tipo=francotirador&nombre=AWP+Asiimov" | jq .
+  ```
+- Jugador (utiliza default):
+  ```bash
+  curl -s "http://localhost:8080/ui/renderizar?tipo=jugador&nombre=coldzera&bando=Terrorista" | jq .
+  ```
+
+#### 4. Endpoints de Armas
+- Construcción simple: `curl -s "http://localhost:8080/armas/construir?tipo=francotirador&nombre=AWP&precio=4750&dano=115&zoom=2" | jq .`
+- Comportamientos polimórficos: `curl -s http://localhost:8080/armas/comportamientos | jq .`
+- Sobrecarga de disparo: `curl -s "http://localhost:8080/armas/disparar?distancia=60&headshot=true" | jq .`
 
 ### Ejecutar Pruebas Automatizadas
 ```bash

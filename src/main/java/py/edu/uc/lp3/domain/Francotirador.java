@@ -5,7 +5,7 @@ package py.edu.uc.lp3.domain;
  * Especialización de Arma que implementa mira telescópica con zoom óptico
  * y daño letal a larga distancia.
  */
-public class Francotirador extends Arma {
+public class Francotirador extends Arma implements UICapable {
 
     private int zoom;
 
@@ -67,5 +67,43 @@ public class Francotirador extends Arma {
             throw new IllegalArgumentException("El nivel de zoom debe ser mayor a cero.");
         }
         this.zoom = zoom;
+    }
+
+    // ========================================================
+    // Implementación de UICapable (Reemplaza el método default)
+    // ========================================================
+
+    /**
+     * Reemplaza el método default de UICapable con una visualización personalizada
+     * del HUD para rifles de francotirador con mira óptica y estado de munición.
+     */
+    @Override
+    public String renderizarUI() {
+        return "HUD Francotirador [" + nombre + "] -> Imagen: '" + getImagen()
+                + "' | Posición: '" + getPosicion()
+                + "' | Sonido: '" + getSonido()
+                + "' | Velocidad: '" + getVelocidad()
+                + "' | Zoom óptico: x" + zoom
+                + " | Munición en pantalla: " + municionActual + "/" + municionMax;
+    }
+
+    @Override
+    public String getImagen() {
+        return "assets/ui/weapons/awp_scope.png";
+    }
+
+    @Override
+    public String getPosicion() {
+        return "HUD_BOTTOM_RIGHT (x: 1820, y: 980)";
+    }
+
+    @Override
+    public String getSonido() {
+        return "sounds/weapons/sniper_zoom.wav";
+    }
+
+    @Override
+    public String getVelocidad() {
+        return "0.85x (animación lenta de mira)";
     }
 }

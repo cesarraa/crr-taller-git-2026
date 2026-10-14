@@ -34,5 +34,26 @@ A continuación se resume la interacción técnica y el flujo de trabajo desarro
    - *Prompt:* Adaptar los controladores REST en `py.edu.uc.lp3.rest.controller` (`IndexController` en `GET /` y `ArmaController` en `/armas/construir`, `/armas/comportamientos` y `/armas/disparar`) para exponer los mecanismos POO y responder en JSON.
    - *Solución:* Se implementaron endpoints que prueban la construcción simple y sobrecargada desde la URL con manejo de excepciones (400 Bad Request), el listado polimórfico de comportamientos en colección homogénea `List<Arma>`, y la ejecución de la sobrecarga de disparo. Se añadieron pruebas unitarias automatizadas (`DominioPoOTests`) que pasan al 100% con `./mvnw test`.
 
-5. **Documentación y Entrega:**
+5. **Documentación y Entrega Inicial (POO-06):**
    - *Prompt:* Elaborar el `README.md` actualizado con diagrama Mermaid completo y explicación teórica de sobrecarga vs sobreescritura, la bitácora obligatoria `BITACORA.md` y el documento de especificaciones para Classroom.
+
+---
+
+## 3. Sesión 2: Taller de Interfaces y Métodos por Defecto (`default` methods) - 14 de Octubre de 2026
+
+1. **Planteamiento de la consigna del día (Ale Feltes):**
+   - *Consigna:* Elegir una capacidad que compartan dos clases del modelo que pertenezcan a familias distintas. Declararla como interfaz en `py.edu.uc.lp3.domain`, con un mensaje que devuelva texto. Cada clase la implementa a su modo; una de las dos puede reemplazar un `default`. Un servicio REST pide ese mensaje a través del tipo de la interfaz y responde JSON. Ejemplo de pizarra: `UICapable { imagen; posicion; sonido; velocidad; }`.
+
+2. **Diseño de la Interfaz y Familias Distintas:**
+   - *Prompt / Diálogo:* Definir cómo modelar la capacidad transversal sin romper la jerarquía existente de `Arma`.
+   - *Solución:*
+     - Se creó la interface `UICapable` en `py.edu.uc.lp3.domain` con el mensaje `renderizarUI()`, implementado como `default method` (Java 8+) que compone `imagen`, `posicion`, `sonido` y `velocidad`.
+     - **Familia 1 (Arma):** La clase `Francotirador` implementa `UICapable` y **reemplaza el default** (`@Override`), generando un renderizado especializado de mira telescópica, zoom óptico, coordenadas del HUD inferior derecho y munición activa.
+     - **Familia 2 (Jugador / Entidad):** Se creó la clase `Jugador` en `py.edu.uc.lp3.domain`, completamente independiente de `Arma` (otra familia). Implementa `UICapable` **aprovechando la implementación default** de `renderizarUI()`, personalizando el icono de radar y posición HUD.
+
+3. **Servicio REST Polimórfico a través de la Interfaz:**
+   - *Solución:* Se programó `UIController` en `py.edu.uc.lp3.rest.controller` con los endpoints `/ui/elementos` y `/ui/renderizar`. Las instancias se declaran y manipulan estrictamente a través del tipo de la interfaz (`UICapable elemento`), invocando `elemento.renderizarUI()` y respondiendo en JSON.
+
+4. **Verificación y Pruebas Automatizadas:**
+   - Se añadieron tests unitarios en `DominioPoOTests` (`testInterfazUICapableFamiliasDistintasYDefaultMethod` y `testInvariantesJugador`), alcanzando 8 tests aprobados al 100% con `./mvnw test`. Se verificaron las respuestas JSON en ejecución real con Spring Boot.
+

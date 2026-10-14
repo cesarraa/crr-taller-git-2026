@@ -124,4 +124,50 @@ class DominioPoOTests {
             sniper.disparar(-10);
         });
     }
+
+    @Test
+    void testInterfazUICapableFamiliasDistintasYDefaultMethod() {
+        // 1. Instancias de familias distintas tratadas polimórficamente por el tipo de interfaz UICapable
+        py.edu.uc.lp3.domain.UICapable elementoArma = new Francotirador("AWP", 4750f, 115, 2);
+        py.edu.uc.lp3.domain.UICapable elementoJugador = new py.edu.uc.lp3.domain.Jugador("s1mple", "Antiterrorista", 100, 16000);
+
+        // Verificar que pertenecen a familias distintas
+        assertTrue(elementoArma instanceof Arma, "Francotirador debe pertenecer a la jerarquía de Arma");
+        assertFalse(elementoJugador instanceof Arma, "Jugador NO debe pertenecer a la jerarquía de Arma");
+
+        // 2. Invocar el mensaje a través del tipo de la interfaz y verificar que devuelven texto
+        String textoArma = elementoArma.renderizarUI();
+        String textoJugador = elementoJugador.renderizarUI();
+
+        assertNotNull(textoArma);
+        assertNotNull(textoJugador);
+
+        // 3. Francotirador reemplaza el método default:
+        assertTrue(textoArma.contains("HUD Francotirador [AWP]"), "Francotirador debe reemplazar el default con su HUD");
+        assertTrue(textoArma.contains("Zoom óptico: x2"));
+
+        // 4. Jugador aprovecha el método default de la interfaz:
+        assertTrue(textoJugador.contains("Renderizado HUD genérico CS2"), "Jugador debe usar la implementación default de renderizarUI()");
+        assertTrue(textoJugador.contains("dot_ct.png"), "Jugador personaliza la imagen de radar");
+        assertTrue(textoJugador.contains("HUD_RADAR_TOP_LEFT"), "Jugador personaliza la posición");
+    }
+
+    @Test
+    void testInvariantesJugador() {
+        assertThrows(IllegalArgumentException.class, () -> new py.edu.uc.lp3.domain.Jugador("", "Terrorista", 100, 800));
+        assertThrows(IllegalArgumentException.class, () -> new py.edu.uc.lp3.domain.Jugador("Fallen", "", 100, 800));
+        assertThrows(IllegalArgumentException.class, () -> new py.edu.uc.lp3.domain.Jugador("Fallen", "CT", -10, 800));
+        assertThrows(IllegalArgumentException.class, () -> new py.edu.uc.lp3.domain.Jugador("Fallen", "CT", 105, 800));
+        assertThrows(IllegalArgumentException.class, () -> new py.edu.uc.lp3.domain.Jugador("Fallen", "CT", 100, -50));
+        assertThrows(IllegalArgumentException.class, () -> new py.edu.uc.lp3.domain.Jugador("Fallen", "CT", 100, 16001));
+
+        py.edu.uc.lp3.domain.Jugador jugadorValido = new py.edu.uc.lp3.domain.Jugador("ZywOo", "Terrorista", 100, 5000);
+        assertEquals("ZywOo", jugadorValido.getAlias());
+        assertTrue(jugadorValido.estaVivo());
+        jugadorValido.recibirDanio(40);
+        assertEquals(60, jugadorValido.getSalud());
+        jugadorValido.recibirDanio(70);
+        assertEquals(0, jugadorValido.getSalud());
+        assertFalse(jugadorValido.estaVivo());
+    }
 }

@@ -21,8 +21,15 @@ public class IndexController {
         respuesta.put("autor", "César Ramírez Román");
         respuesta.put("asignatura", "Lenguajes de Programación 3 (CYT646)");
         respuesta.put("dominio", "Counter-Strike 2 (CS2)");
-        respuesta.put("paquetes", "py.edu.uc.lp3.domain / py.edu.uc.lp3.rest.controller");
-        respuesta.put("mecanismosPOO", "Sobrecarga (constructores y disparar) y Sobreescritura (describirComportamiento)");
+        respuesta.put("mecanismosPOO", "Sobrecarga, Sobreescritura e Interfaces con Default Methods (UICapable)");
+        respuesta.put("endpointsDisponibles", Map.of(
+                "raiz", "GET /",
+                "armasConstruir", "GET /armas/construir?tipo={francotirador|pistola}&...",
+                "armasComportamientos", "GET /armas/comportamientos",
+                "armasDisparar", "GET /armas/disparar?distancia={m}&headshot={bool}",
+                "uiElementos", "GET /ui/elementos",
+                "uiRenderizar", "GET /ui/renderizar?tipo={francotirador|jugador}"
+        ));
         return respuesta;
     }
 }
