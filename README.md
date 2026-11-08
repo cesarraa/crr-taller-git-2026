@@ -1,69 +1,145 @@
 # crr-taller-git-2026
 
-Repositorio del **Taller de Git y Modelado Orientado a Objetos** — Asignatura: **Lenguajes de Programación 3 (CYT646)** — Año 2026.  
+Repositorio del **Taller de Git, Modelado Orientado a Objetos y Persistencia en H2** — Asignatura: **Lenguajes de Programación 3 (CYT646)** — Año 2026.  
 Alumno: **César Ramírez Román** (`cesarraa`).  
 Dominio seleccionado: **Counter-Strike 2 (CS2)**.  
 Licencia: **Apache License 2.0** (ver archivo [LICENSE](LICENSE)).
 
 ---
 
-## Enlace al Commit de la Solución
+## Enlace al Commit de la Solución (POO-08)
 
-- **Commit de la entrega:** https://github.com/cesarraa/crr-taller-git-2026/commit/62066c81e70ff5432d503aabdc4122af595ff1e7
+- **Commit de la entrega POO-08:** https://github.com/cesarraa/crr-taller-git-2026/commit/{HASH_COMMIT_AQUI}
+- **Commit previo POO-07 (Interfaces):** https://github.com/cesarraa/crr-taller-git-2026/commit/4d0095d
+- **Commit previo POO-06 (Herencia/Paquetes):** https://github.com/cesarraa/crr-taller-git-2026/commit/62066c81e70ff5432d503aabdc4122af595ff1e7
 
 ---
 
-## 1. Organización de Paquetes
+## 1. Cómo Arrancar la Aplicación
 
-Siguiendo estrictamente las especificaciones del template de la cátedra ([lp3-template-tp](https://github.com/alefq/lp3-template-tp/tree/main/src/main/java/py/edu/uc/lp3)):
+El proyecto utiliza **Maven Wrapper** y **Spring Boot 4.1.1** (compilado para Java 21+):
+
+```bash
+# En Windows / Linux / macOS:
+./mvnw spring-boot:run
+```
+
+Una vez iniciado, el servicio queda disponible en:
+- **API REST:** `http://localhost:8080/`
+- **Consola Web H2:** `http://localhost:8080/h2-console`
+  - **JDBC URL:** `jdbc:h2:mem:cs2db`
+  - **User Name:** `sa`
+  - **Password:** *(vacía)*
+
+---
+
+## 2. Propiedades de H2 y JPA Explicadas (`application.properties`)
+
+Cada línea del archivo `src/main/resources/application.properties` cumple una función específica en el ciclo de persistencia:
+
+- `spring.application.name=cs2`: Define el identificador lógico de la aplicación en el ecosistema Spring.
+- `spring.datasource.url=jdbc:h2:mem:cs2db`: Configura la base de datos relacional H2 en modo memoria (`mem`), aislada bajo el nombre `cs2db`.
+- `spring.datasource.driverClassName=org.h2.Driver`: Especifica el driver JDBC oficial para comunicarse con el motor H2.
+- `spring.datasource.username=sa`: Establece el usuario administrador del sistema (*System Administrator*) para la conexión.
+- `spring.datasource.password=`: Deja la contraseña vacía, facilitando el acceso rápido en el entorno de desarrollo y pruebas.
+- `spring.jpa.database-platform=org.hibernate.dialect.H2Dialect`: Instruye a Hibernate a utilizar el dialecto SQL específico de H2 para optimizar las sentencias generadas.
+- `spring.jpa.hibernate.ddl-auto=update`: Hibernate crea automáticamente las tablas al arrancar según las entidades `@Entity` y actualiza el esquema sin destruir los datos durante la sesión.
+- `spring.jpa.show-sql=true`: Muestra en la consola de comandos cada consulta SQL ejecutada (SELECT, INSERT, UPDATE, DELETE) para depuración.
+- `spring.jpa.properties.hibernate.format_sql=true`: Aplica formato estructurado e identado a las consultas SQL impresas en consola para facilitar su lectura.
+- `spring.h2.console.enabled=true`: Habilita la interfaz web interactiva de administración de H2.
+- `spring.h2.console.path=/h2-console`: Determina la ruta web mediante la cual se accede a la consola gráfica desde el navegador.
+
+---
+
+## 3. Organización de Paquetes (Arquitectura en 3 Capas)
+
+Siguiendo el estándar de paquetes del template de la cátedra ([lp3-template-tp](https://github.com/alefq/lp3-template-tp)):
 
 ```text
 src/main/java/py/edu/uc/lp3/
 ├── Cs2Application.java                     # Arranque de Spring Boot (@SpringBootApplication)
-├── domain/                                 # Clases de dominio del modelo de CS2
-│   ├── Arma.java                           # Clase base abstracta (Familia Arma)
-│   ├── Francotirador.java                  # Especialización de Arma e implementa UICapable (reemplaza default)
-│   ├── Pistola.java                        # Especialización de Arma
-│   ├── Escopeta.java                       # Especialización de Arma
-│   ├── Subfusil.java                       # Especialización de Arma
-│   ├── Granada.java                        # Especialización de Arma
-│   ├── GranadaFlash.java                   # Especialización de Granada
-│   ├── GranadaHumo.java                    # Especialización de Granada
-│   ├── GranadaIncendiaria.java             # Especialización de Granada
-│   ├── GranadaTipo.java                    # Enum de tipos de granada
-│   ├── Jugador.java                        # Familia independiente e implementa UICapable (usa default)
-│   └── UICapable.java                      # Interface del dominio con mensaje de texto y default method
-└── rest/controller/                        # Capa de presentación REST (Servicios HTTP)
-    ├── IndexController.java                # GET /
-    ├── ArmaController.java                 # GET /armas/construir, /armas/comportamientos, /armas/disparar
-    └── UIController.java                   # GET /ui/elementos, /ui/renderizar (consumo vía interfaz)
+├── config/                                 # Configuración y Carga Inicial
+│   └── DataInitializer.java               # Pre-carga de datos canónicos CS2 en H2 (@Configuration)
+├── domain/                                 # Capa de Dominio y Entidades JPA
+│   ├── Arma.java                           # Entidad base persistente (@Entity, SINGLE_TABLE, Jackson polimórfico)
+│   ├── Francotirador.java                  # Especialización de Arma e implementa UICapable (@Entity, Hija 1)
+│   ├── Pistola.java                        # Especialización de Arma (@Entity, Hija 2)
+│   ├── Escopeta.java                       # Especialización de Arma (@Entity)
+│   ├── Subfusil.java                       # Especialización de Arma (@Entity)
+│   ├── Granada.java                        # Especialización de Arma (@Entity)
+│   ├── Jugador.java                        # Entidad independiente e implementa UICapable (@Entity)
+│   └── UICapable.java                      # Interfaz de dominio con método default (POO-07)
+├── exception/                              # Jerarquía de Excepciones del Dominio
+│   ├── DominioCS2Exception.java            # Clase base de la jerarquía (Unchecked / RuntimeException)
+│   ├── MunicionAgotadaException.java       # Excepción Hija 1 (Estado de arma sin balas -> 409 Conflict)
+│   ├── EconomiaInvalidaException.java      # Excepción Hija 2 (Violación de tope de $16,000 -> 422 Unprocessable)
+│   ├── RecursoNoEncontradoException.java   # Mapeada a HTTP 404 Not Found
+│   └── ReglaNegocioException.java          # Mapeada a HTTP 400 Bad Request
+├── repository/                             # Capa de Persistencia (Spring Data JPA)
+│   ├── ArmaRepository.java                 # JpaRepository<Arma, Long> con consultas derivadas
+│   └── JugadorRepository.java              # JpaRepository<Jugador, Long> para combatientes
+├── service/                                # Capa de Lógica de Negocio y Simulación (Service)
+│   ├── ArmaService.java                    # Reglas de validación, transaccionalidad y CRUD (@Service)
+│   ├── SimulacionService.java              # Orquesta simulación balística con las 2 reglas (@Service)
+│   └── ResultadoSimulacion.java            # DTO que transporta los resultados observables y persistidos
+└── rest/controller/                        # Capa de Presentación REST (Controladores HTTP)
+    ├── IndexController.java                # GET / (Catálogo de endpoints y metadata)
+    ├── ArmaCrudController.java             # CRUD REST completo en /api/armas (Padre e Hijas)
+    ├── SimulacionController.java           # Endpoint /api/simulacion/combate y /estado
+    ├── JugadorController.java              # Endpoints en /api/jugadores
+    ├── GlobalExceptionHandler.java         # @RestControllerAdvice con handler dedicado por tipo
+    ├── UIController.java                   # GET /ui/elementos y /ui/renderizar (consumo vía interfaz)
+    └── ArmaController.java                 # Endpoints históricos de POO-06
 ```
 
 ---
 
-## 2. Diagrama de Clases (Mermaid)
+## 4. Diagrama de Clases Mermaid
 
-El siguiente diagrama refleja fielmente la jerarquía de herencia, visibilidad de miembros, constructores y métodos implementados en `src/main/java/py/edu/uc/lp3/domain/`:
+El siguiente diagrama modela fielmente la **herencia** (`--|>`), **implementación de interfaces** (`..|>`), **asociaciones de uso e inyección** (`-->`), y la **jerarquía de excepciones**:
 
 ```mermaid
 classDiagram
+    %% Protocolo e Interfaz
+    class UICapable {
+        <<interface>>
+        +getImagen()* String
+        +getPosicion()* String
+        +getSonido() String
+        +getVelocidad() String
+        +renderizarUI() String
+    }
+
+    %% Familia Persistida (Padre y dos Hijas)
     class Arma {
-        <<abstract>>
+        #Long id
         #String nombre
         #float precio
         #int dano
         #float peso
         #int municionMax
         #int municionActual
+        +Arma()
         +Arma(nombre, precio, dano)
         +Arma(nombre, precio, dano, peso, municionMax)
-        +describirComportamiento()* String
+        +describirComportamiento() String
         +disparar() String
         +disparar(distanciaMetros) String
         +disparar(distanciaMetros, tiroALaCabeza) String
+        +calcularDanioEfectivo(distancia, headshot) int
         +recargar() String
-        +obtenerPrecio() int
-        +obtenerNombre() String
+        +getTipo() String
+    }
+
+    class Francotirador {
+        -int zoom
+        +Francotirador()
+        +Francotirador(nombre, precio, dano, zoom)
+        +Francotirador(nombre, precio, dano, peso, municionMax, zoom)
+        +describirComportamiento() String
+        +calcularDanioEfectivo(distancia, headshot) int
+        +activarZoom() String
+        +renderizarUI() String
     }
 
     class Pistola {
@@ -73,266 +149,223 @@ classDiagram
         +Pistola(nombre, precio, dano)
         +Pistola(nombre, precio, dano, peso, municionMax, modoDisparo, cargador)
         +describirComportamiento() String
+        +calcularDanioEfectivo(distancia, headshot) int
     }
 
-    class Francotirador {
-        -int zoom
-        +Francotirador()
-        +Francotirador(nombre, precio, dano, zoom)
-        +Francotirador(nombre, precio, dano, peso, municionMax, zoom)
-        +describirComportamiento() String
-        +activarZoom() String
-    }
-
-    class Escopeta {
-        -int cartuchos
-        -float dispersion
-        +Escopeta()
-        +Escopeta(nombre, precio, dano, cartuchos)
-        +Escopeta(nombre, precio, dano, peso, municionMax, cartuchos, dispersion)
-        +describirComportamiento() String
-    }
-
-    class Subfusil {
-        -String modoDisparo
-        -int cargador
-        +Subfusil()
-        +Subfusil(nombre, precio, dano, cargador)
-        +Subfusil(nombre, precio, dano, peso, municionMax, modoDisparo, cargador)
-        +describirComportamiento() String
-    }
-
-    class Granada {
-        #GranadaTipo tipoGranada
-        #float radioExplosion
-        +Granada(nombre, precio, dano, tipoGranada)
-        +Granada(nombre, precio, dano, peso, municionMax, tipoGranada, radioExplosion)
-        +lanzar() String
-        +describirComportamiento() String
-    }
-
-    class GranadaFlash {
-        +GranadaFlash()
-        +GranadaFlash(nombre, precio, dano, peso, municionMax, radioExplosion)
-    }
-
-    class GranadaHumo {
-        +GranadaHumo()
-        +GranadaHumo(nombre, precio, dano, peso, municionMax, radioExplosion)
-    }
-
-    class GranadaIncendiaria {
-        +GranadaIncendiaria()
-        +GranadaIncendiaria(nombre, precio, dano, peso, municionMax, radioExplosion)
-    }
-
-    class GranadaTipo {
-        <<enumeration>>
-        HUMO
-        FLASH
-        INCENDIARIA
-    }
-
-    class UICapable {
-        <<interface>>
-        +renderizarUI() String$
-        +getImagen() String$
-        +getPosicion() String$
-        +getSonido() String$
-        +getVelocidad() String$
-    }
-
+    %% Familia Independiente
     class Jugador {
+        -Long id
         -String alias
         -String bando
         -int salud
         -int dinero
         +Jugador()
         +Jugador(alias, bando, salud, dinero)
-        +getImagen() String
-        +getPosicion() String
         +recibirDanio(cantidad) void
         +estaVivo() boolean
+        +getImagen() String
+        +getPosicion() String
     }
 
-    Arma <|-- Pistola
-    Arma <|-- Francotirador
-    Arma <|-- Escopeta
-    Arma <|-- Subfusil
-    Arma <|-- Granada
-    Granada <|-- GranadaFlash
-    Granada <|-- GranadaHumo
-    Granada <|-- GranadaIncendiaria
-    Granada --> GranadaTipo
-    UICapable <|.. Francotirador : implementa (reemplaza default)
-    UICapable <|.. Jugador : implementa (usa default)
+    %% Relaciones de Dominio
+    Arma <|-- Francotirador : Herencia ("Es un")
+    Arma <|-- Pistola : Herencia ("Es un")
+    UICapable <|.. Francotirador : Reemplaza default
+    UICapable <|.. Jugador : Usa default method
+
+    %% Capa de Persistencia
+    class ArmaRepository {
+        <<interface>>
+        +findByNombreIgnoreCase(nombre) Optional~Arma~
+        +existsByNombreIgnoreCase(nombre) boolean
+        +existsByNombreIgnoreCaseAndIdNot(nombre, id) boolean
+    }
+    class JugadorRepository {
+        <<interface>>
+        +findByAliasIgnoreCase(alias) Optional~Jugador~
+    }
+
+    %% Capa de Negocio / Servicios
+    class ArmaService {
+        -ArmaRepository armaRepository
+        +listarTodas() List~Arma~
+        +buscarPorId(id) Arma
+        +crear(nuevaArma) Arma
+        +actualizar(id, datosNuevos) Arma
+        +actualizarParcial(id, campos) Arma
+        +eliminar(id) void
+        +dispararArma(id, distancia, headshot) String
+        +recargarArma(id) Arma
+    }
+
+    class SimulacionService {
+        -ArmaRepository armaRepository
+        -JugadorRepository jugadorRepository
+        +ejecutarSimulacionCombate(sniperId, pistolaId, jugadorId, dist, headshot) ResultadoSimulacion
+        +obtenerEstadoSimulacion() Map
+    }
+
+    ArmaService --> ArmaRepository : Inyecta
+    SimulacionService --> ArmaRepository : Inyecta
+    SimulacionService --> JugadorRepository : Inyecta
+
+    %% Capa de Controladores REST
+    class ArmaCrudController {
+        -ArmaService armaService
+        +listarArmas() ResponseEntity
+        +obtenerArmaPorId(id) ResponseEntity
+        +crearArma(nuevaArma) ResponseEntity
+        +actualizarArma(id, datos) ResponseEntity
+        +actualizarParcial(id, campos) ResponseEntity
+        +eliminarArma(id) ResponseEntity
+        +dispararArma(id, dist, hs) ResponseEntity
+    }
+
+    class SimulacionController {
+        -SimulacionService simulacionService
+        +simularCombate(sniperId, pistolaId, jugadorId, dist, hs) ResponseEntity
+        +obtenerEstado() ResponseEntity
+    }
+
+    ArmaCrudController --> ArmaService : Dispara lógica
+    SimulacionController --> SimulacionService : Dispara simulación
+
+    %% Jerarquía de Excepciones
+    class RuntimeException {
+        <<Java Base>>
+    }
+    class DominioCS2Exception {
+        <<Clase Base Dominio>>
+    }
+    class MunicionAgotadaException {
+        <<Hija 1>>
+        -String nombreArma
+        -int municionActual
+        -int municionMax
+    }
+    class EconomiaInvalidaException {
+        <<Hija 2>>
+        -float precio
+        -float limiteMaximo
+    }
+
+    RuntimeException <|-- DominioCS2Exception : Herencia
+    DominioCS2Exception <|-- MunicionAgotadaException : Especialización
+    DominioCS2Exception <|-- EconomiaInvalidaException : Especialización
+
+    class GlobalExceptionHandler {
+        +manejarMunicionAgotada(ex) 409 Conflict
+        +manejarEconomiaInvalida(ex) 422 Unprocessable
+        +manejarRecursoNoEncontrado(ex) 404 Not Found
+        +manejarArgumentoIlegal(ex) 400 Bad Request
+    }
+
+    GlobalExceptionHandler ..> MunicionAgotadaException : Handler HTTP
+    GlobalExceptionHandler ..> EconomiaInvalidaException : Handler HTTP
 ```
 
 ---
 
-## 3. Sobrecarga vs. Sobreescritura
+## 5. Las Dos Reglas de Negocio en una Frase Cada Una
 
-En este ejercicio se aplicaron los dos mecanismos fundamentales del polimorfismo en la Programación Orientada a Objetos:
+1. **Regla 1 (Balística y Consumo de Munición del Arma — Clases `Arma`, `Francotirador` y `Pistola`):**  
+   > *Al disparar, el arma consume munición de su cargador y calcula el daño balístico efectivo aplicando atenuación por distancia y multiplicadores tácticos según su tipo (`Francotirador` letal a larga distancia con zoom; `Pistola` a corta distancia); si la munición llega a cero, el arma bloquea el disparo y lanza `MunicionAgotadaException`.*
 
-### ¿Qué cambió con la Sobrecarga (Overloading)?
-
-La **sobrecarga** ocurre cuando existen múltiples métodos (o constructores) con el **mismo nombre pero diferente lista de parámetros** dentro de la misma clase o jerarquía. Se resuelve en **tiempo de compilación** (*polimorfismo estático*):
-
-1. **Constructores sobrecargados:**
-   - En la clase base `Arma`: se incorporó un constructor simple `Arma(nombre, precio, dano)` con valores estándar seguros (2.5 kg, 20 balas), junto al constructor completo sobrecargado `Arma(nombre, precio, dano, peso, municionMax)`.
-   - En `Francotirador`: constructor por defecto `Francotirador()`, constructor simple `Francotirador(nombre, precio, dano, zoom)` y constructor sobrecargado completo `Francotirador(nombre, precio, dano, peso, municionMax, zoom)`.
-   - En `Pistola`: constructor por defecto `Pistola()`, constructor simple `Pistola(nombre, precio, dano)` y constructor completo `Pistola(nombre, precio, dano, peso, municionMax, modoDisparo, cargador)`.
-   - Cada constructor garantiza la invariante de estado: ningún constructor permite dejar el objeto en un estado inconsistente o con campos ilegales. Las subclases delegan la inicialización de atributos base mediante llamadas obligatorias a `super(...)`.
-2. **Sobrecarga de mensajes del dominio (`disparar`):**
-   - `disparar()`: Disparo simple a quemarropa sin argumentos adicionales.
-   - `disparar(int distanciaMetros)`: Disparo especificando distancia, aplicando atenuación balística en el cálculo del daño efectivo.
-   - `disparar(int distanciaMetros, boolean tiroALaCabeza)`: Disparo de alta precisión con cálculo de multiplicador crítico por *headshot*.
-
-### ¿Qué cambió con la Sobreescritura (Overriding)?
-
-La **sobreescritura** ocurre cuando una clase hija redefine un método de la clase padre manteniendo **exactamente la misma firma** (mismo nombre, mismos parámetros y tipo de retorno compatible). Se resuelve en **tiempo de ejecución** (*polimorfismo dinámico o enlace tardío*):
-
-1. **Método abstracto en la clase base:**
-   - La clase `Arma` declara: `public abstract String describirComportamiento();`
-   - La clase padre no puede ni debe saber cómo opera cada familia de arma; esa responsabilidad pertenece a las clases concretas.
-2. **Sobreescritura en clases hijas independientes:**
-   - `Pistola` sobreescribe `@Override public String describirComportamiento()` informando su función como arma secundaria de combate cerrado, cadencia rápida y capacidad de su cargador.
-   - `Francotirador` sobreescribe `@Override public String describirComportamiento()` detallando su rol quirúrgico a larga distancia con magnificación de mira óptica xZoom y penalización de dispersión sin apuntar.
-3. **Consumo polimórfico en el Controller:**
-   - En `ArmaController.listarComportamientos()` se almacena una colección `List<Arma>` que contiene tanto instancias de `Pistola` como de `Francotirador`.
-   - El controlador interactúa con todas las instancias exclusivamente a través del tipo base `Arma` e invoca `arma.describirComportamiento()` sin requerir condicionales (`if/else`) ni inspección de tipos (`instanceof`).
-
-### Comparación Conceptual
-
-| Criterio | Sobrecarga (Overloading) | Sobreescritura (Overriding) |
-|---|---|---|
-| **Definición** | Mismo nombre de método con distinta firma (parámetros) | Misma firma exacta redefinida en una subclase |
-| **Ubicación** | En la misma clase o heredada | En una clase hija (relación de herencia) |
-| **Momento de resolución** | Tiempo de compilación (*enlace temprano*) | Tiempo de ejecución (*enlace tardío / dynamic dispatch*) |
-| **Palabra clave / Anotación** | Ninguna obligatoria | `@Override` |
-| **Ejemplo en el proyecto** | `disparar()` vs `disparar(distancia)` / Constructores | `describirComportamiento()` en `Francotirador` y `Pistola` |
+2. **Regla 2 (Impacto y Salud Vital del Combatiente — Clase `Jugador`):**  
+   > *Cuando un `Jugador` recibe el impacto del proyectil disparado por un arma, su nivel de salud se reduce en la cantidad exacta del daño recibido hasta un piso inquebrantable de cero (`salud = Math.max(0, salud - danio)`), cambiando su estado vital a eliminado (`estaVivo() == false`) si la salud llega a cero.*
 
 ---
 
----
+## 6. Respuestas a "Qué hay que pensar" (Consignas del Enunciado)
 
-## 4. Interfaces y Métodos por Defecto (`default` methods)
+### 1. Protocolo del dominio (`interface`)
+- **¿Qué interface es y cómo se llama?** Se utiliza la interfaz `UICapable` (creada en POO-07), ubicada en `py.edu.uc.lp3.domain`.
+- **¿Qué endpoints la usan?** Los endpoints `GET /ui/elementos` y `GET /ui/renderizar` de `UIController`.
+- **¿Puede hablar con instancias de familias distintas?** Sí. En `GET /ui/elementos`, el controlador maneja una colección polimórfica homogénea `List<UICapable>` que contiene tanto a un `Francotirador` (familia `Arma`) como a un `Jugador` (familia `Jugador`), invocando el mensaje `renderizarUI()` de forma transparente e independiente de sus jerarquías concretas.
 
-En cumplimiento de la consigna de la cátedra para el taller de interfaces:
-> *"Elegí una capacidad que compartan dos clases de tu modelo, y que esas dos clases estén en familias distintas.*  
-> *Declarala como interface en domain, con un mensaje que devuelva texto.*  
-> *Cada clase la implementa a su modo. Una de las dos puede reemplazar un default.*  
-> *Un servicio REST pide ese mensaje a través del tipo de la interfaz y responde JSON.*  
-> *Minecraft o Counter-Strike 2, el que ya venís modelando. El ejemplo de la pizarra es para mirar la forma:*  
-> *`UICapable { imagen; posicion; sonido; velocidad; }`"*
+### 2. Ocultamiento e Invariantes
+- **¿Quién sostiene las reglas numéricas del juego?** Las clases del dominio (`Arma`, `Francotirador`, `Pistola`, `Jugador`) en sus constructores, métodos de acción (`disparar`, `recargar`, `recibirDanio`) y validaciones de la capa de servicio (`ArmaService`).
+- **¿Qué prueba de Insomnia muestra que un `POST` ilegal deja la base igual que antes?** La petición `09 - POST Ilegal (Invariante Roto: Daño <= 0)` envía un cuerpo con `"dano": -15`. El constructor y el servicio rechazan la operación arrojando `IllegalArgumentException`, el handler responde `400 Bad Request`, y un `GET /api/armas` posterior demuestra que la colección no creció ni se alteró.
 
-### 4.1. Declaración de la Interfaz en `domain`
-Se definió la interface `py.edu.uc.lp3.domain.UICapable` que modela la capacidad de cualquier elemento del juego para renderizarse en la interfaz de usuario (HUD, radar, inventario) de CS2:
-- **Mensaje que devuelve texto:** `String renderizarUI()`
-- **Implementación por defecto (`default` method):** La interface provee una implementación base de `renderizarUI()` que concatena los atributos gráficos y de audio (`getImagen()`, `getPosicion()`, `getSonido()`, `getVelocidad()`).
+### 3. PUT vs PATCH
+- **PUT (`PUT /api/armas/{id}`):** Reemplazo semántico completo del recurso. Requiere el objeto íntegro; los campos omitidos son tratados según los valores por defecto o disparan recarga legal.
+- **PATCH (`PATCH /api/armas/{id}`):** Actualización parcial. Acepta un mapa JSON con un subconjunto de claves (ej: sólo `{"precio": 1400, "dano": 29}`) y modifica únicamente esos atributos, preservando intactos el nombre, peso, munición y configuraciones previas.
 
-### 4.2. Dos Clases en Familias Distintas
-1. **Familia Arma (`Francotirador`):**
-   - Pertenece a la jerarquía de herencia de `Arma` (`Francotirador extends Arma implements UICapable`).
-   - **Reemplaza el default (`@Override`):** Redefine completamente `renderizarUI()` para mostrar el visor táctico de mira óptica (`awp_scope.png`), nivel de magnificación (`x2`), slot inferior derecho del HUD y estado en tiempo real de munición.
-2. **Familia Jugador (`Jugador`):**
-   - Pertenece a una jerarquía independiente (`Jugador implements UICapable`), completamente desacoplada de `Arma`.
-   - **Aprovecha el default:** No sobreescribe `renderizarUI()`, consumiendo directamente la implementación por defecto provista por la interfaz `UICapable`, personalizando únicamente el icono de radar (`assets/ui/radar/dot_ct.png`) y su posición en pantalla.
+### 4. DELETE
+- **¿Qué significa borrar en su modelo?** Significa la eliminación física de la fila en la tabla `armas` de la base de datos H2 mediante `armaRepository.delete(arma)`.
+- **¿Ese verbo HTTP habla con un mensaje del dominio?** Sí, primero busca y valida la existencia del recurso con `buscarPorId(id)`, y luego ejecuta el borrado físico respondiendo status 200 con un JSON de confirmación. Consultas posteriores por dicho ID responden inmediatamente `404 Not Found`.
 
-### 4.3. Consumo REST a través del Tipo de la Interfaz
-En `UIController` (`py.edu.uc.lp3.rest.controller.UIController`), los elementos se manipulan exclusivamente mediante referencias del tipo `UICapable`:
-```java
-List<UICapable> elementos = List.of(
-    new Jugador("s1mple", "Antiterrorista", 100, 16000),
-    new Francotirador("AWP", 4750f, 115, 4.3f, 10, 2)
-);
+### 5. Dos Reglas y Simulación Persistida
+- **¿Qué dos hechos del juego cambian el estado de más de un objeto a la vez?** El disparo balístico conjunto de un `Francotirador` y una `Pistola` contra un `Jugador`: gasta 1 bala del rifle, 1 bala de la pistola, y simultáneamente reduce la salud del combatiente en el daño acumulado.
+- **¿Cómo se llama el recurso HTTP de la simulación?** `POST /api/simulacion/combate` (y `GET /api/simulacion/estado`).
+- **¿Un `GET` posterior muestra el resultado ya persistido?** Sí, un `GET /api/armas/3`, `GET /api/armas/4` o `GET /api/jugadores/1` confirma que la munición restante y la salud disminuida están efectivamente guardadas en H2.
 
-for (UICapable elemento : elementos) {
-    // Se pide el mensaje polimórfico a través del tipo de la interfaz:
-    String textoUI = elemento.renderizarUI();
-}
-```
+### 6. Jerarquía de Excepciones del Dominio
+- **¿Cómo se llama cada clase y por qué?**
+  - `DominioCS2Exception`: Clase base no comprobada de la familia de excepciones del juego.
+  - `MunicionAgotadaException`: Hija 1, nombrada por la regla física de disparo fallido cuando el cargador está en 0.
+  - `EconomiaInvalidaException`: Hija 2, nombrada por la regla económica competitiva de CS2 (rango `$0` a `$16,000`).
+- **¿Un recurso inexistente y una regla de juego incumplida son tipos distintos?** Sí. Un recurso inexistente es un problema de direccionamiento HTTP/persistencia (`RecursoNoEncontradoException` -> 404 Not Found), mientras que una regla de juego es una imposibilidad del dominio (`MunicionAgotadaException` -> 409 Conflict, `EconomiaInvalidaException` -> 422 Unprocessable).
+- **¿Qué lleva el JSON de error?** Contiene `timestamp`, `status`, `error`, `tipoExcepcion`, `codigo` legible (ej. `CS2_ARMA_SIN_MUNICION`), campos de contexto (`arma`, `municionActual`, `precioSolicitado`, etc.) y el `mensaje` explicativo.
 
----
-
-## 5. Ocultamiento de la Información e Invariantes
-
-> **Pregunta de anclaje de la rúbrica:** *¿Qué ocurre si el controller asigna a mano la vida o la munición? ¿Puede otra clase dejar el objeto en un estado imposible?*
-
-- **Respuesta:** No, es imposible. Los atributos de las clases son `protected` y `private`.
-- No existen setters públicos que permitan alterar libremente `municionActual` o la `salud` de un jugador.
-- La munición solo puede alterarse a través de los mensajes del dominio: `disparar()` y `recargar()`.
-- La salud de `Jugador` solo se reduce a través de `recibirDanio(cantidad)`, impidiendo valores negativos o superiores a 100.
-- Todos los constructores y setters validan invariantes lanzando `IllegalArgumentException` ante parámetros inconsistentes.
+### 7. Preguntas de Anclaje de la Cátedra
+- **Si mañana cambiamos H2 por PostgreSQL u Oracle, ¿qué archivos se tocan y cuáles se quedan quietos?**  
+  *Se tocan:* Únicamente `pom.xml` (dependencia del driver JDBC) y `application.properties` (URL JDBC, usuario, clave y dialecto).  
+  *Se quedan quietos:* Absolutamente todas las clases del dominio (`Arma`, `Francotirador`, `Pistola`, `Jugador`), las excepciones, los controladores REST, los servicios (`ArmaService`, `SimulacionService`) y los repositorios (`ArmaRepository`). Esto demuestra el desacoplamiento de Spring Data JPA.
+- **¿Quién lanza la excepción, el controller o el objeto del juego?**  
+  La lanza el **objeto del juego** (métodos del dominio en `Arma` y `Jugador`) o la capa de servicio ante una regla de negocio. El controller jamás inventa validaciones; su rol se limita a recibir la petición, delegar al servicio/dominio y dejar que `@RestControllerAdvice` capture la excepción emitida.
+- **¿Cómo convive el constructor sin argumentos de JPA frente al ocultamiento y los constructores de negocio?**  
+  JPA requiere un constructor por defecto sin argumentos (`public Arma() {}` o `protected`) para instanciar los objetos por reflexión al leer filas de la BD. El ocultamiento se preserva manteniendo constructores sobrecargados de negocio obligatorios para el código cliente, validando invariantes en los setters e impidiendo setters que corrompan el estado operacional.
+- **¿Diferencia entre excepción comprobada (*checked*) y no comprobada (*unchecked*), y por qué usamos no comprobada?**  
+  Las excepciones comprobadas heredan de `Exception` y fuerzan cláusulas `throws` en cada método intermedio acoplando capas. Las excepciones no comprobadas heredan de `RuntimeException`. Usamos **no comprobadas** (`DominioCS2Exception`) porque desacoplan limpiamente el dominio, y permiten que `@Transactional` de Spring ejecute rollback automático sin requerir configuración adicional de `rollbackFor`.
+- **¿Cómo discrimina Jackson el subtipo al crear y al listar?**  
+  Se configuró `@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "tipo", defaultImpl = Arma.class)` y `@JsonSubTypes` en `Arma.java`. Al enviar `{"tipo": "FRANCOTIRADOR", ...}` Jackson instancia automáticamente `Francotirador.class` con su campo `zoom`. Al serializar, Jackson incluye `"tipo": "FRANCOTIRADOR"` o `"tipo": "PISTOLA"`.
 
 ---
 
-## 6. Instrucciones de Ejecución y Pruebas
+## 7. Colección de Insomnia: Cómo Importar y Recorrer
 
-### Arrancar el Microservicio
+La colección se encuentra versionada en dos rutas estándar del proyecto:
+- `insomnia/insomnia_collection_lp3_poo08.json`
+- `docs/insomnia/insomnia_collection_lp3_poo08.json`
+
+### Importación en Insomnia:
+1. Abrir **Insomnia REST Client**.
+2. Ir a **Preferences / Settings** o presionar `Ctrl + Shift + I` (**Import/Export**).
+3. Seleccionar **Import Data** -> **From File**.
+4. Elegir el archivo `insomnia/insomnia_collection_lp3_poo08.json`.
+5. Se creará el espacio de trabajo **"LP3 - POO-08 CRUD H2 CS2 API"** con el entorno base `base_url = http://localhost:8080`.
+
+### Orden Recomendado de Ejecución (Paso a Paso):
+1. **01 - GET / (Servicio Vivo):** Verifica que Spring Boot está corriendo en puerto 8080 (200 OK).
+2. **02 - POST /api/armas (Crear Francotirador):** Registra un "SSG 08 Scout" con `"tipo": "FRANCOTIRADOR"` y `"zoom": 2` (201 Created).
+3. **03 - POST /api/armas (Crear Pistola):** Registra una "USP-S Táctica" con `"tipo": "PISTOLA"` y `"cargador": 12` (201 Created).
+4. **04 - GET /api/armas (Listar Colección):** Comprueba que la colección contiene las armas precargadas y las nuevas creadas con sus subtipos discriminados.
+5. **05 - GET /api/armas/1 (Buscar por ID):** Retorna el arma AK-47 persistida.
+6. **06 - PUT /api/armas/1 (Actualización Completa):** Modifica el arma a "AK-47 Vulcan" (200 OK).
+7. **07 - PATCH /api/armas/1 (Actualización Parcial):** Modifica sólo precio y daño sin tocar el resto.
+8. **08 - DELETE /api/armas/2:** Borra el arma 2 (M4A4) de la base de datos.
+9. **09 - POST Ilegal (Invariante Roto):** Envía daño negativo; responde `400 Bad Request` y la base no se corrompe.
+10. **10 - GET ID Inexistente:** Consulta `/api/armas/999` y recibe `404 Not Found`.
+11. **11 - Excepción Hija 1 (MunicionAgotadaException):** Dispara un arma hasta agotar el cargador; el intento siguiente responde `409 Conflict`.
+12. **12 - Excepción Hija 2 (EconomiaInvalidaException):** Intenta registrar un arma con precio $25,000; responde `422 Unprocessable Entity`.
+13. **13 - GET /ui/elementos:** Prueba el consumo polimórfico de la interfaz `UICapable`.
+14. **15 - POST /api/simulacion/combate:** Ejecuta la simulación balística con las dos reglas del juego.
+15. **16 - GET /api/simulacion/estado:** Verifica que la munición gastada y la salud reducida quedaron persistidas en H2.
+
+---
+
+## 8. Ejecución de Pruebas Automatizadas
 
 ```bash
-./mvnw spring-boot:run
+./mvnw clean test
 ```
 
-El servicio iniciará en el puerto local `8080`.
-
-### Probar los Servicios REST
-
-#### 1. Confirmar estado del servicio (`GET /`)
-```bash
-curl -s http://localhost:8080/ | jq .
+**Resultado:**
+```text
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
 ```
-
-#### 2. Listar Elementos UI polimórficamente (`GET /ui/elementos`)
-Demuestra el consumo polimórfico de clases en familias distintas (`Jugador` y `Francotirador`) tratadas como `UICapable`, evidenciando el uso y reemplazo del `default`:
-```bash
-curl -s http://localhost:8080/ui/elementos | jq .
-```
-Respuesta JSON:
-```json
-[
-  {
-    "clase": "Jugador",
-    "familia": "Familia Jugador (Personaje/Entidad)",
-    "tipoInterfaz": "py.edu.uc.lp3.domain.UICapable",
-    "reemplazaMetodoDefault": false,
-    "mensajeUI": "Renderizado HUD genérico CS2 [imagen='assets/ui/radar/dot_ct.png', posicion='HUD_RADAR_TOP_LEFT (x: 50, y: 50)', sonido='sounds/ui/hud_beep.wav', velocidad='1.0x (60 FPS)']",
-    "imagen": "assets/ui/radar/dot_ct.png",
-    "posicion": "HUD_RADAR_TOP_LEFT (x: 50, y: 50)",
-    "sonido": "sounds/ui/hud_beep.wav",
-    "velocidad": "1.0x (60 FPS)"
-  },
-  {
-    "clase": "Francotirador",
-    "familia": "Familia Arma (Balística)",
-    "tipoInterfaz": "py.edu.uc.lp3.domain.UICapable",
-    "reemplazaMetodoDefault": true,
-    "mensajeUI": "HUD Francotirador [AWP] -> Imagen: 'assets/ui/weapons/awp_scope.png' | Posición: 'HUD_BOTTOM_RIGHT (x: 1820, y: 980)' | Sonido: 'sounds/weapons/sniper_zoom.wav' | Velocidad: '0.85x (animación lenta de mira)' | Zoom óptico: x2 | Munición en pantalla: 10/10",
-    "imagen": "assets/ui/weapons/awp_scope.png",
-    "posicion": "HUD_BOTTOM_RIGHT (x: 1820, y: 980)",
-    "sonido": "sounds/weapons/sniper_zoom.wav",
-    "velocidad": "0.85x (animación lenta de mira)"
-  }
-]
-```
-
-#### 3. Renderizar Elemento Individual vía Interfaz (`GET /ui/renderizar`)
-- Francotirador (reemplaza default):
-  ```bash
-  curl -s "http://localhost:8080/ui/renderizar?tipo=francotirador&nombre=AWP+Asiimov" | jq .
-  ```
-- Jugador (utiliza default):
-  ```bash
-  curl -s "http://localhost:8080/ui/renderizar?tipo=jugador&nombre=coldzera&bando=Terrorista" | jq .
-  ```
-
-#### 4. Endpoints de Armas
-- Construcción simple: `curl -s "http://localhost:8080/armas/construir?tipo=francotirador&nombre=AWP&precio=4750&dano=115&zoom=2" | jq .`
-- Comportamientos polimórficos: `curl -s http://localhost:8080/armas/comportamientos | jq .`
-- Sobrecarga de disparo: `curl -s "http://localhost:8080/armas/disparar?distancia=60&headshot=true" | jq .`
-
-### Ejecutar Pruebas Automatizadas
-```bash
-./mvnw test
-```
+- **12 tests** en `ArmaCrudIntegrationTests`: ciclo CRUD completo, rechazo de duplicados, validación económica, persistencia polimórfica, actualización PATCH, disparo y recarga, y simulación de combate persistida en H2.
+- **7 tests** en `DominioPoOTests`: constructores sobrecargados, sobreescritura, sobrecarga de métodos, invariantes e interfaz `UICapable`.
+- **1 test** en `Cs2ApplicationTests`: arranque del contexto de Spring Boot.

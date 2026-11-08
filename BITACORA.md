@@ -1,7 +1,7 @@
 # Bitácora de Asistencia de Inteligencia Artificial (IA)
 
 **Asignatura:** Lenguajes de Programación 3 (CYT646)  
-**Ejercicio:** `ejercicio-poo-06-revision-paquetes-constructores-2026-09-30`  
+**Ejercicio:** `ejercicio-poo-08-crud-h2-insomnia-2026-10-28`  
 **Alumno:** César Ramírez Román (`cesarraa`)  
 **Repositorio:** `crr-taller-git-2026`  
 
@@ -14,46 +14,59 @@
 
 ---
 
-## 2. Resumen de Prompts y Diálogo de Trabajo
-
-A continuación se resume la interacción técnica y el flujo de trabajo desarrollado con el asistente de IA para resolver la práctica:
+## 2. Sesión 1: Modelado POO Inicial y Revisión de Paquetes (POO-06)
 
 1. **Planteamiento de la consigna y análisis de requerimientos:**
-   - *Prompt / Solicitud inicial:* Se proporcionó el enunciado completo del ejercicio POO-06, solicitando implementar la revisión del modelado orientado a objetos para Counter-Strike 2 (CS2), migrar la estructura de paquetes al estándar oficial del template de la cátedra (`py.edu.uc.lp3.domain` y `py.edu.uc.lp3.rest.controller`), e incorporar constructores simples y sobrecargados, sobrecarga de mensajes del dominio, sobreescritura de métodos abstractos y servicios REST en Spring Boot.
-   - *Contexto de ejecución:* Se indicó que el desarrollo y las pruebas operativas finales se ejecutan sobre la máquina virtual Lubuntu (`LP3`).
-
-2. **Diseño del modelo de dominio y encapsulamiento:**
-   - *Prompt:* Se solicitó estructurar la clase base abstracta `Arma` y sus especializaciones (`Francotirador`, `Pistola`, `Escopeta`, `Subfusil`, `Granada`), asegurando el cumplimiento de la pregunta de anclaje de la cátedra: evitar que capas externas puedan dejar los objetos en estados ilegales o imposibles mediante manipulación indebida de vida o munición.
-   - *Solución:* Se encapsularon los atributos (`protected`/`private`), se eliminó cualquier setter público permisivo para la munición, y se concentró la mutación del estado exclusivamente en las acciones del dominio (`disparar` y `recargar`), validando rigurosamente invariantes con `IllegalArgumentException` en constructores simples y sobrecargados.
-
-3. **Sobrecarga y Sobreescritura:**
-   - *Prompt:* Implementar constructores sobrecargados que invoquen a `super(...)` asegurando estados legales, sobrecargar el mensaje de dominio `disparar` (versión estándar sin parámetros, versión con distancia y versión con impacto crítico), y sobreescribir el método abstracto `describirComportamiento()` en las clases hijas concretas.
-   - *Solución:* Se programaron las tres firmas de `disparar`, constructores simples y completos encadenados, y las implementaciones polimórficas de `describirComportamiento()` en cada subclase.
-
-4. **Controladores REST y Verificación:**
-   - *Prompt:* Adaptar los controladores REST en `py.edu.uc.lp3.rest.controller` (`IndexController` en `GET /` y `ArmaController` en `/armas/construir`, `/armas/comportamientos` y `/armas/disparar`) para exponer los mecanismos POO y responder en JSON.
-   - *Solución:* Se implementaron endpoints que prueban la construcción simple y sobrecargada desde la URL con manejo de excepciones (400 Bad Request), el listado polimórfico de comportamientos en colección homogénea `List<Arma>`, y la ejecución de la sobrecarga de disparo. Se añadieron pruebas unitarias automatizadas (`DominioPoOTests`) que pasan al 100% con `./mvnw test`.
-
-5. **Documentación y Entrega Inicial (POO-06):**
-   - *Prompt:* Elaborar el `README.md` actualizado con diagrama Mermaid completo y explicación teórica de sobrecarga vs sobreescritura, la bitácora obligatoria `BITACORA.md` y el documento de especificaciones para Classroom.
+   - *Prompt inicial:* Se solicitó estructurar el modelado orientado a objetos para Counter-Strike 2 (CS2) siguiendo el estándar oficial del template (`py.edu.uc.lp3.domain` y `py.edu.uc.lp3.rest.controller`), incorporando constructores simples y sobrecargados encadenados con `super(...)`, sobrecarga de mensajes del dominio (`disparar`), sobreescritura de métodos polimórficos (`describirComportamiento`) y servicios REST en Spring Boot.
+2. **Encapsulamiento e Invariantes:**
+   - Se protegieron atributos con visibilidad `protected` y `private`, restringiendo la mutación del estado a las acciones de dominio y validando invariantes con `IllegalArgumentException`.
 
 ---
 
-## 3. Sesión 2: Taller de Interfaces y Métodos por Defecto (`default` methods) - 14 de Octubre de 2026
+## 3. Sesión 2: Interfaces y Métodos por Defecto (`default` methods) - POO-07
 
-1. **Planteamiento de la consigna del día (Ale Feltes):**
-   - *Consigna:* Elegir una capacidad que compartan dos clases del modelo que pertenezcan a familias distintas. Declararla como interfaz en `py.edu.uc.lp3.domain`, con un mensaje que devuelva texto. Cada clase la implementa a su modo; una de las dos puede reemplazar un `default`. Un servicio REST pide ese mensaje a través del tipo de la interfaz y responde JSON. Ejemplo de pizarra: `UICapable { imagen; posicion; sonido; velocidad; }`.
+1. **Consigna:**
+   - Modelar una capacidad compartida entre dos clases de familias distintas mediante una interfaz de dominio (`UICapable`).
+2. **Solución Implementada:**
+   - Interfaz `UICapable` con `renderizarUI()` como `default method`.
+   - **Familia Arma:** `Francotirador` implementa `UICapable` y **reemplaza el default** (`@Override`) con HUD óptico.
+   - **Familia Jugador:** `Jugador` implementa `UICapable` y **aprovecha la implementación default** de `renderizarUI()`.
+   - Exposición en `UIController` (`/ui/elementos` y `/ui/renderizar`) manipulando las instancias polimórficamente a través del tipo de la interfaz.
 
-2. **Diseño de la Interfaz y Familias Distintas:**
-   - *Prompt / Diálogo:* Definir cómo modelar la capacidad transversal sin romper la jerarquía existente de `Arma`.
+---
+
+## 4. Sesión 3: CRUD REST, H2, Jerarquía de Excepciones, Reglas de Juego y Colección Insomnia (POO-08)
+
+1. **Planteamiento de la consigna POO-08:**
+   - Publicar un servicio HTTP con Spring Boot sobre CS2 que persista su estado en **H2**.
+   - Persistir **tres clases de una familia** (`Arma`, `Francotirador`, `Pistola`) más la clase independiente `Jugador`.
+   - CRUD REST completo con **discriminación polimórfica en JSON con Jackson** (`tipo`).
+   - Implementar **dos reglas de negocio del juego** que alimenten una **simulación persistida** de combate (`/api/simulacion/combate`).
+   - Crear una **jerarquía de excepciones del dominio** (una clase base y dos hijas) con un **handler HTTP dedicado por tipo**.
+   - Generar y versionar una colección completa de **Insomnia** en `insomnia/` y `docs/insomnia/`.
+
+2. **Diseño de la Jerarquía de Excepciones del Dominio:**
+   - *Prompt:* Definir la familia de excepciones del juego, la elección entre comprobadas o no comprobadas, y su vinculación con `@RestControllerAdvice`.
    - *Solución:*
-     - Se creó la interface `UICapable` en `py.edu.uc.lp3.domain` con el mensaje `renderizarUI()`, implementado como `default method` (Java 8+) que compone `imagen`, `posicion`, `sonido` y `velocidad`.
-     - **Familia 1 (Arma):** La clase `Francotirador` implementa `UICapable` y **reemplaza el default** (`@Override`), generando un renderizado especializado de mira telescópica, zoom óptico, coordenadas del HUD inferior derecho y munición activa.
-     - **Familia 2 (Jugador / Entidad):** Se creó la clase `Jugador` en `py.edu.uc.lp3.domain`, completamente independiente de `Arma` (otra familia). Implementa `UICapable` **aprovechando la implementación default** de `renderizarUI()`, personalizando el icono de radar y posición HUD.
+     - Se creó la clase base `DominioCS2Exception` extendiendo `RuntimeException` (no comprobada / *unchecked*), asegurando que Spring ejecute rollback transaccional automático sin contaminar firmas de métodos.
+     - **Hija 1 (`MunicionAgotadaException`):** Lanzada por el dominio cuando se intenta disparar un arma sin cartuchos. Su handler responde **HTTP 409 Conflict** indicando que el estado físico del recurso colisiona con la acción.
+     - **Hija 2 (`EconomiaInvalidaException`):** Lanzada cuando el precio viola los topes reglamentarios de CS2 ($0 a $16,000). Su handler responde **HTTP 422 Unprocessable Entity**.
+     - Handler para `RecursoNoEncontradoException` (404 Not Found) y `IllegalArgumentException` (400 Bad Request por invariantes de construcción).
 
-3. **Servicio REST Polimórfico a través de la Interfaz:**
-   - *Solución:* Se programó `UIController` en `py.edu.uc.lp3.rest.controller` con los endpoints `/ui/elementos` y `/ui/renderizar`. Las instancias se declaran y manipulan estrictamente a través del tipo de la interfaz (`UICapable elemento`), invocando `elemento.renderizarUI()` y respondiendo en JSON.
+3. **Simulación Persistida con las Dos Reglas de Negocio:**
+   - *Prompt:* Diseñar la simulación persistida articulando las 3 clases del dominio con 2 reglas del juego.
+   - *Solución:*
+     - **Regla 1 (Balística y Consumo de Munición):** En `Arma`, `Francotirador` y `Pistola`, el disparo consume munición del cargador y calcula el daño efectivo con atenuación y zoom; lanza `MunicionAgotadaException` si no hay munición.
+     - **Regla 2 (Impacto y Salud Vital):** En `Jugador`, el combatiente recibe el daño acumulado hasta un piso de cero (`salud = Math.max(0, salud - danio)`), determinando si continúa con vida (`estaVivo()`).
+     - Orquestado en `SimulacionService` y expuesto en `POST /api/simulacion/combate` y `GET /api/simulacion/estado`, persistiendo el estado en H2 mediante `ArmaRepository` y `JugadorRepository`.
 
-4. **Verificación y Pruebas Automatizadas:**
-   - Se añadieron tests unitarios en `DominioPoOTests` (`testInterfazUICapableFamiliasDistintasYDefaultMethod` y `testInvariantesJugador`), alcanzando 8 tests aprobados al 100% con `./mvnw test`. Se verificaron las respuestas JSON en ejecución real con Spring Boot.
+4. **Discriminación Polimórfica Jackson y CRUD:**
+   - Se configuraron anotaciones `@JsonTypeInfo` y `@JsonSubTypes` en `Arma.java`. Al hacer `POST /api/armas` con `"tipo": "FRANCOTIRADOR"`, Jackson instancia la clase hija correspondiente con sus atributos específicos.
+   - Se añadieron operaciones `PUT` (reemplazo total) y `PATCH` (actualización parcial).
 
+5. **Colección de Insomnia Versionada:**
+   - Se construyó y exportó la colección en formato v4 con 16 solicitudes agrupadas en carpetas lógicas: Arranque, CRUD, Errores/Excepciones (incluyendo un pedido por cada hija), Protocolo de Interfaz y Simulación Persistida.
+
+6. **Verificación Automatizada:**
+   - Se ampliaron las pruebas de integración en `ArmaCrudIntegrationTests`.
+   - Ejecución de `mvn clean test`: **20 de 20 pruebas aprobadas exitosamente al 100%** (0 errores, 0 fallos).
