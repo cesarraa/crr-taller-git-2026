@@ -1,0 +1,393 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-08T19:30:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_lp3_cs2",
+      "parentId": null,
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "name": "LP3 - POO-08 CRUD H2 CS2 API",
+      "description": "Colección completa para la evaluación de POO-08: CRUD REST con persistencia H2, arquitectura 3 capas, interfaz UICapable, jerarquía de excepciones y simulación de combate CS2.",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_lp3_cs2_base",
+      "parentId": "wrk_lp3_cs2",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8080"
+      },
+      "dataPropertyOrder": {
+        "&": ["base_url"]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1698500000000,
+      "_type": "environment"
+    },
+    {
+      "_id": "fld_01_arranque",
+      "parentId": "wrk_lp3_cs2",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "name": "01. Arranque y Salud",
+      "description": "Verifica que el servicio Spring Boot se encuentra activo y respondiendo.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_01_index",
+      "parentId": "fld_01_arranque",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/",
+      "name": "01 - GET / (Servicio Vivo)",
+      "description": "Confirma que el servicio Spring Boot está vivo y expone los metadatos de la arquitectura.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -100,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_02_crud",
+      "parentId": "wrk_lp3_cs2",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "name": "02. CRUD REST - Familia Arma (Padre e Hijas)",
+      "description": "Operaciones CRUD completas con persistencia en H2 y discriminación polimórfica Jackson.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_02_post_francotirador",
+      "parentId": "fld_02_crud",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas",
+      "name": "02 - POST /api/armas (Crear Francotirador - Hija 1)",
+      "description": "Crea una instancia persistida de Francotirador con subtipo discriminado por 'tipo' y atributo específico 'zoom'.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"FRANCOTIRADOR\",\n  \"nombre\": \"SSG 08 Scout\",\n  \"precio\": 1700,\n  \"dano\": 88,\n  \"peso\": 3.6,\n  \"municionMax\": 10,\n  \"zoom\": 2\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -90,
+      "_type": "request"
+    },
+    {
+      "_id": "req_03_post_pistola",
+      "parentId": "fld_02_crud",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas",
+      "name": "03 - POST /api/armas (Crear Pistola - Hija 2)",
+      "description": "Crea una instancia persistida de Pistola con atributos específicos 'cargador' y 'modoDisparo'.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"PISTOLA\",\n  \"nombre\": \"USP-S Táctica\",\n  \"precio\": 200,\n  \"dano\": 35,\n  \"peso\": 1.0,\n  \"municionMax\": 12,\n  \"cargador\": 12,\n  \"modoDisparo\": \"Silenciada\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -80,
+      "_type": "request"
+    },
+    {
+      "_id": "req_04_get_armas",
+      "parentId": "fld_02_crud",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas",
+      "name": "04 - GET /api/armas (Listar Colección Persistida)",
+      "description": "Lista todas las armas persistidas en H2, evidenciando subtipos discriminados.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -70,
+      "_type": "request"
+    },
+    {
+      "_id": "req_05_get_arma_id",
+      "parentId": "fld_02_crud",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas/1",
+      "name": "05 - GET /api/armas/1 (Buscar por ID Existente)",
+      "description": "Obtiene los detalles del arma con ID 1 persistida en H2.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -60,
+      "_type": "request"
+    },
+    {
+      "_id": "req_06_put_arma",
+      "parentId": "fld_02_crud",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas/1",
+      "name": "06 - PUT /api/armas/1 (Actualización Completa)",
+      "description": "Reemplaza completamente los datos del arma con ID 1 en H2.",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nombre\": \"AK-47 Vulcan\",\n  \"precio\": 2700,\n  \"dano\": 37,\n  \"peso\": 3.5,\n  \"municionMax\": 30,\n  \"municionActual\": 30\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -50,
+      "_type": "request"
+    },
+    {
+      "_id": "req_07_patch_arma",
+      "parentId": "fld_02_crud",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas/1",
+      "name": "07 - PATCH /api/armas/1 (Actualización Parcial)",
+      "description": "Actualiza únicamente campos específicos (precio y daño) sin modificar el resto.",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"precio\": 2650,\n  \"dano\": 38\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -40,
+      "_type": "request"
+    },
+    {
+      "_id": "req_08_delete_arma",
+      "parentId": "fld_02_crud",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas/2",
+      "name": "08 - DELETE /api/armas/2 (Eliminar Ítem)",
+      "description": "Elimina físicamente el arma de la base de datos H2.",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -30,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_03_errores",
+      "parentId": "wrk_lp3_cs2",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "name": "03. Invariantes, 404 y Jerarquía de Excepciones",
+      "description": "Pruebas de errores con handlers dedicados por tipo de excepción.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_09_post_ilegal",
+      "parentId": "fld_03_errores",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas",
+      "name": "09 - POST Ilegal (Invariante Roto: Daño <= 0 -> 400 Bad Request)",
+      "description": "Provoca IllegalArgumentException en constructor/setter. El handler responde 400 Bad Request y no ensucia la BD.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nombre\": \"Arma Ilegal\",\n  \"precio\": 1000,\n  \"dano\": -15,\n  \"peso\": 2.0,\n  \"municionMax\": 30\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -20,
+      "_type": "request"
+    },
+    {
+      "_id": "req_10_id_inexistente",
+      "parentId": "fld_03_errores",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas/999",
+      "name": "10 - GET ID Inexistente (404 Not Found)",
+      "description": "Lanza RecursoNoEncontradoException. El handler responde HTTP 404 Not Found.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -10,
+      "_type": "request"
+    },
+    {
+      "_id": "req_11_hija1_municion",
+      "parentId": "fld_03_errores",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas/1/disparar",
+      "name": "11 - Excepción Hija 1: MunicionAgotadaException (409 Conflict)",
+      "description": "Al disparar un arma que ya no tiene cartuchos, el dominio lanza MunicionAgotadaException. El handler HTTP responde 409 CONFLICT indicando el percutor vacío.",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 0,
+      "_type": "request"
+    },
+    {
+      "_id": "req_12_hija2_economia",
+      "parentId": "fld_03_errores",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas",
+      "name": "12 - Excepción Hija 2: EconomiaInvalidaException (422 Unprocessable)",
+      "description": "Al intentar crear un arma con precio $25000 que excede el tope de $16,000 en CS2, el dominio lanza EconomiaInvalidaException. El handler HTTP responde 422 UNPROCESSABLE ENTITY.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nombre\": \"AWP Dragon Lore Ilegal\",\n  \"precio\": 25000,\n  \"dano\": 115,\n  \"peso\": 4.5,\n  \"municionMax\": 10\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 10,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_04_interfaz",
+      "parentId": "wrk_lp3_cs2",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "name": "04. Protocolo e Interfaz de Dominio (UICapable)",
+      "description": "Consumo polimórfico de clases en familias distintas a través del tipo de la interfaz.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_13_ui_elementos",
+      "parentId": "fld_04_interfaz",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/ui/elementos",
+      "name": "13 - GET /ui/elementos (Consumo Polimórfico UICapable)",
+      "description": "Consume polimórficamente Francotirador (reemplaza default) y Jugador (aprovecha default) a través del tipo UICapable.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 20,
+      "_type": "request"
+    },
+    {
+      "_id": "req_14_ui_renderizar",
+      "parentId": "fld_04_interfaz",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/ui/renderizar?tipo=francotirador&nombre=AWP+Asiimov",
+      "name": "14 - GET /ui/renderizar (Renderizado Individual por Interfaz)",
+      "description": "Renderiza el HUD de un elemento individual invocando renderizarUI() mediante el tipo UICapable.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 30,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_05_simulacion",
+      "parentId": "wrk_lp3_cs2",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "name": "05. Simulación Persistida - Dos Reglas de Juego CS2",
+      "description": "Simulación que articula las 3 clases (Francotirador, Pistola, Jugador) con persistencia en H2.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_15_simulacion_combate",
+      "parentId": "fld_05_simulacion",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/simulacion/combate?distancia=35&headshot=true",
+      "name": "15 - POST /api/simulacion/combate (Ejecutar Simulación Persistida)",
+      "description": "Ejecuta la ronda balística: Francotirador y Pistola disparan aplicando Regla 1 (consumo/daño) e impactan en Jugador aplicando Regla 2 (reducción de salud). Los cambios se persisten en H2.",
+      "method": "POST",
+      "body": {},
+      "parameters": [
+        {
+          "name": "distancia",
+          "value": "35"
+        },
+        {
+          "name": "headshot",
+          "value": "true"
+        }
+      ],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 40,
+      "_type": "request"
+    },
+    {
+      "_id": "req_16_simulacion_estado",
+      "parentId": "fld_05_simulacion",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/simulacion/estado",
+      "name": "16 - GET /api/simulacion/estado (Comprobar Estado Persistido en H2)",
+      "description": "Comprueba que la munición de las armas y la salud del jugador han quedado persistidas de verdad en la base de datos H2.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 50,
+      "_type": "request"
+    }
+  ]
+}
