@@ -1,10 +1,15 @@
 package py.edu.uc.lp3.domain;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
 /**
  * Representa un rifle de francotirador en Counter-Strike 2.
  * Especialización de Arma que implementa mira telescópica con zoom óptico
  * y daño letal a larga distancia.
  */
+@Entity
+@DiscriminatorValue("FRANCOTIRADOR")
 public class Francotirador extends Arma implements UICapable {
 
     private int zoom;
@@ -34,7 +39,7 @@ public class Francotirador extends Arma implements UICapable {
     }
 
     /**
-     * Constructor por defecto.
+     * Constructor por defecto requerido por JPA / Hibernate y Jackson.
      * Crea un francotirador emblemático AWP con atributos canónicos de CS2.
      */
     public Francotirador() {
@@ -49,6 +54,16 @@ public class Francotirador extends Arma implements UICapable {
     public String describirComportamiento() {
         return "Francotirador " + nombre + ": disparo quirúrgico letal a larga distancia utilizando mira telescópica con zoom óptico x"
                 + zoom + " y penalización severa de precisión al disparar sin fijar mira.";
+    }
+
+    /**
+     * Comportamiento balístico especializado: mínima atenuación por distancia y alta letalidad en cabeza.
+     */
+    @Override
+    public int calcularDanioEfectivo(int distanciaMetros, boolean tiroALaCabeza) {
+        double atenuacion = Math.max(0.75, 1.0 - (distanciaMetros * 0.001));
+        double multiplicador = tiroALaCabeza ? (2.0 + zoom) : 1.0;
+        return (int) Math.round(dano * atenuacion * multiplicador);
     }
 
     /**
@@ -73,10 +88,6 @@ public class Francotirador extends Arma implements UICapable {
     // Implementación de UICapable (Reemplaza el método default)
     // ========================================================
 
-    /**
-     * Reemplaza el método default de UICapable con una visualización personalizada
-     * del HUD para rifles de francotirador con mira óptica y estado de munición.
-     */
     @Override
     public String renderizarUI() {
         return "HUD Francotirador [" + nombre + "] -> Imagen: '" + getImagen()

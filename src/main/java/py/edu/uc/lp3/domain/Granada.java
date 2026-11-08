@@ -1,12 +1,24 @@
 package py.edu.uc.lp3.domain;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+
 /**
  * Representa un artefacto arrojadizo de tipo granada en CS2. Hereda de Arma.
  */
+@Entity
+@DiscriminatorValue("GRANADA")
 public class Granada extends Arma {
 
+    @Enumerated(EnumType.STRING)
     protected GranadaTipo tipoGranada;
     protected float radioExplosion;
+
+    public Granada() {
+        this("Granada de Humo", 300f, 0, 0.4f, 1, GranadaTipo.HUMO, 5.0f);
+    }
 
     public Granada(String nombre, float precio, int dano, float peso, int municionMax,
                    GranadaTipo tipoGranada, float radioExplosion) {

@@ -1,8 +1,13 @@
 package py.edu.uc.lp3.domain;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
 /**
  * Especialización de Granada cegadora (Flashbang).
  */
+@Entity
+@DiscriminatorValue("GRANADA_FLASH")
 public class GranadaFlash extends Granada {
 
     public GranadaFlash(String nombre, float precio, int dano, float peso, int municionMax,

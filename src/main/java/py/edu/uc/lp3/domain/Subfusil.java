@@ -1,8 +1,13 @@
 package py.edu.uc.lp3.domain;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
 /**
  * Representa un subfusil (SMG) en Counter-Strike 2. Hereda de Arma.
  */
+@Entity
+@DiscriminatorValue("SUBFUSIL")
 public class Subfusil extends Arma {
 
     private String modoDisparo;

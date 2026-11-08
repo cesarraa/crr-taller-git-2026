@@ -1,8 +1,13 @@
 package py.edu.uc.lp3.domain;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
 /**
  * Representa un arma de tipo escopeta en Counter-Strike 2. Hereda de Arma.
  */
+@Entity
+@DiscriminatorValue("ESCOPETA")
 public class Escopeta extends Arma {
 
     private int cartuchos;

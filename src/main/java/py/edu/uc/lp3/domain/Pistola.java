@@ -1,9 +1,14 @@
 package py.edu.uc.lp3.domain;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
 /**
  * Representa un arma secundaria tipo pistola en Counter-Strike 2.
  * Especialización de Arma caracterizada por alta movilidad y cadencia de apoyo a corta distancia.
  */
+@Entity
+@DiscriminatorValue("PISTOLA")
 public class Pistola extends Arma {
 
     private String modoDisparo;
@@ -38,7 +43,7 @@ public class Pistola extends Arma {
     }
 
     /**
-     * Constructor por defecto.
+     * Constructor por defecto requerido por JPA / Hibernate y Jackson.
      * Instancia una pistola estándar Glock-18 con valores canónicos de CS2.
      */
     public Pistola() {
@@ -53,6 +58,16 @@ public class Pistola extends Arma {
     public String describirComportamiento() {
         return "Pistola " + nombre + ": arma secundaria para combate a corta distancia en modo "
                 + modoDisparo + " con ciclo rápido de recarga para " + cargador + " balas.";
+    }
+
+    /**
+     * Comportamiento balístico de arma corta: atenuación marcada a media/larga distancia.
+     */
+    @Override
+    public int calcularDanioEfectivo(int distanciaMetros, boolean tiroALaCabeza) {
+        double atenuacion = Math.max(0.15, 1.0 - (distanciaMetros * 0.015));
+        double multiplicador = tiroALaCabeza ? 2.0 : 1.0;
+        return (int) Math.round(dano * atenuacion * multiplicador);
     }
 
     public String getModoDisparo() {
