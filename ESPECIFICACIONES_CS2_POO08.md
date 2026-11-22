@@ -6,6 +6,8 @@
 **Alumno:** César Ramírez Román (`cesarraa`)  
 **Repositorio:** `crr-taller-git-2026`  
 **Dominio:** Counter-Strike 2 (CS2)  
+**Enlace al Commit de la Solución Corregida:** https://github.com/cesarraa/crr-taller-git-2026/commit/7dbde7152778ff124b268bcd5ba0596a0d8ac2d1
+
 **Enlace al Commit de la Solución Original:** https://github.com/cesarraa/crr-taller-git-2026/commit/3e361a4c9d3f3d5ebb1ba7ad69a7e85854c2d0d7
 
 ---
