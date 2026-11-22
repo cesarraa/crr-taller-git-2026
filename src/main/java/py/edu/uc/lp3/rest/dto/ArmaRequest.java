@@ -1,22 +1,32 @@
 package py.edu.uc.lp3.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "Datos de entrada para crear o reemplazar un arma. El tipo elige el subtipo concreto.")
 public class ArmaRequest {
 
+    @Schema(description = "Subtipo a construir", example = "FRANCOTIRADOR", allowableValues = {"FUSIL", "FRANCOTIRADOR", "PISTOLA", "ESCOPETA", "SUBFUSIL", "GRANADA", "GRANADA_FLASH", "GRANADA_HUMO", "GRANADA_INCENDIARIA"})
     private String tipo;
+    @Schema(description = "Nombre único del arma", example = "AWP Magnético")
     private String nombre;
+
+    @Schema(description = "Precio en dólares de CS2; debe estar entre 0 y 16000", example = "4750")
     private Float precio;
 
     @JsonAlias({"danio", "daño"})
+    @Schema(description = "Daño base; debe estar entre 1 y 500", example = "115")
     private Integer dano;
 
+    @Schema(description = "Peso del arma; debe ser positivo", example = "6.5")
     private Float peso;
 
     @JsonAlias({"municionMaxima", "municion_max", "maxAmmo"})
+    @Schema(description = "Capacidad máxima del cargador", example = "10")
     private Integer municionMax;
 
     @JsonAlias({"municion", "municion_actual", "currentAmmo"})
+    @Schema(description = "Munición actual; entre 0 y municionMax", example = "10")
     private Integer municionActual;
 
     private Integer zoom;

@@ -1,5 +1,7 @@
 package py.edu.uc.lp3.rest.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,9 +13,11 @@ import java.util.Map;
  * Responde en GET / con metadatos del autor, asignatura y catálogo de endpoints.
  */
 @RestController
+@Tag(name = "Raíz", description = "Metadatos y catálogo de endpoints del servicio.")
 public class IndexController {
 
     @GetMapping("/")
+    @Operation(summary = "Estado del servicio", description = "Confirma que el servicio está vivo y lista todos los recursos disponibles.")
     public Map<String, Object> index() {
         Map<String, Object> respuesta = new LinkedHashMap<>();
         respuesta.put("status", "UP");

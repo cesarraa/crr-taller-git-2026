@@ -1,5 +1,9 @@
 package py.edu.uc.lp3.rest.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import py.edu.uc.lp3.service.ResultadoSimulacion;
@@ -7,17 +11,9 @@ import py.edu.uc.lp3.service.SimulacionService;
 
 import java.util.Map;
 
-/**
- * Controlador REST para la simulación persistida de reglas de juego de Counter-Strike 2.
- * Expone la simulación que articula las 3 clases del modelado (Francotirador, Pistola y Jugador),
- * ejecutando las dos reglas de negocio de daño balístico, consumo de munición e impacto vital.
- *
- * Endpoints:
- * - POST /api/simulacion/combate : Ejecuta la simulación con persistencia en H2.
- * - GET  /api/simulacion/estado  : Muestra el estado persistido resultante en la BD.
- */
 @RestController
 @RequestMapping("/api/simulacion")
+@Tag(name = "Simulación", description = "Combate persistido que aplica la regla 1 (daño y munición) y la regla 2 (salud del jugador).")
 public class SimulacionController {
 
     private final SimulacionService simulacionService;
@@ -26,12 +22,13 @@ public class SimulacionController {
         this.simulacionService = simulacionService;
     }
 
-    /**
-     * Ejecuta la simulación de combate CS2.
-     * Puede recibir parámetros opcionales por query o body, o correr el caso canónico predeterminado.
-     * POST /api/simulacion/combate
-     */
     @PostMapping("/combate")
+    @Operation(summary = "Simular combate", description = "Dispara un francotirador y una pistola sobre un jugador, consume munición y reduce la salud. Parámetros omitidos usan los ejemplos persistidos. Responde 409 si falta munición.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Simulación ejecutada y persistida"),
+            @ApiResponse(responseCode = "404", description = "Arma o jugador no encontrado"),
+            @ApiResponse(responseCode = "409", description = "Munición agotada en alguna de las armas")
+    })
     public ResponseEntity<ResultadoSimulacion> simularCombate(
             @RequestParam(required = false) Long francotiradorId,
             @RequestParam(required = false) Long pistolaId,
@@ -45,11 +42,9 @@ public class SimulacionController {
         return ResponseEntity.ok(resultado);
     }
 
-    /**
-     * Consulta el estado persistido de los recursos involucrados en la simulación.
-     * GET /api/simulacion/estado
-     */
     @GetMapping("/estado")
+    @Operation(summary = "Estado de la simulación", description = "Devuelve los recursos persistidos después de la simulación para comprobar munición y salud en H2.")
+    @ApiResponse(responseCode = "200", description = "Estado obtenido correctamente")
     public ResponseEntity<Map<String, Object>> obtenerEstado() {
         return ResponseEntity.ok(simulacionService.obtenerEstadoSimulacion());
     }

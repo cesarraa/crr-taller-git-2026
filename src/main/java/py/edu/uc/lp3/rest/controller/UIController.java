@@ -1,5 +1,7 @@
 package py.edu.uc.lp3.rest.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import py.edu.uc.lp3.domain.Arma;
@@ -16,6 +18,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/ui")
+@Tag(name = "Interfaz UICapable", description = "Consumo polimórfico de la interfaz de dominio sobre entidades leídas de H2.")
 public class UIController {
 
     private final ArmaService armaService;
@@ -27,6 +30,7 @@ public class UIController {
     }
 
     @GetMapping("/elementos")
+    @Operation(summary = "Elementos de interfaz", description = "Muestra el HUD de un jugador y un francotirador persistidos a través de UICapable.")
     public ResponseEntity<List<Map<String, Object>>> listarElementosUI() {
         Jugador jugador = jugadorService.primerJugador();
         Francotirador francotirador = armaService.primerFrancotirador();
@@ -52,6 +56,7 @@ public class UIController {
     }
 
     @GetMapping("/renderizar")
+    @Operation(summary = "Renderizar elemento", description = "Renderiza el HUD de una entidad persistida. tipo debe ser 'francotirador' o 'jugador'.")
     public ResponseEntity<?> renderizarElemento(
             @RequestParam(defaultValue = "francotirador") String tipo,
             @RequestParam(required = false) String nombre,
