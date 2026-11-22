@@ -3,7 +3,7 @@ package py.edu.uc.lp3.config;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import py.edu.uc.lp3.domain.Arma;
+import py.edu.uc.lp3.domain.Fusil;
 import py.edu.uc.lp3.domain.Francotirador;
 import py.edu.uc.lp3.domain.Jugador;
 import py.edu.uc.lp3.domain.Pistola;
@@ -22,10 +22,10 @@ public class DataInitializer {
         return args -> {
             if (armaRepository.count() == 0) {
                 // Fusil de asalto icónico
-                armaRepository.save(new Arma("AK-47", 2700f, 36, 3.47f, 30));
+                armaRepository.save(new Fusil("AK-47", 2700f, 36, 3.47f, 30));
 
                 // Fusil contraterrorista
-                armaRepository.save(new Arma("M4A4", 3100f, 33, 3.40f, 30));
+                armaRepository.save(new Fusil("M4A4", 3100f, 33, 3.40f, 30));
 
                 // Francotirador de precisión (Hija 1)
                 armaRepository.save(new Francotirador("AWP", 4750f, 115, 4.30f, 10, 2));

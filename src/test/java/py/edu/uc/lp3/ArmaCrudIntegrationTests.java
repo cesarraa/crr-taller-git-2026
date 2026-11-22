@@ -3,6 +3,7 @@ package py.edu.uc.lp3;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import py.edu.uc.lp3.domain.Arma;
 import py.edu.uc.lp3.domain.Francotirador;
@@ -12,8 +13,11 @@ import py.edu.uc.lp3.exception.EconomiaInvalidaException;
 import py.edu.uc.lp3.exception.MunicionAgotadaException;
 import py.edu.uc.lp3.exception.RecursoNoEncontradoException;
 import py.edu.uc.lp3.exception.ReglaNegocioException;
-import py.edu.uc.lp3.repository.JugadorRepository;
+import py.edu.uc.lp3.rest.controller.UIController;
+import py.edu.uc.lp3.rest.dto.ArmaRequest;
+import py.edu.uc.lp3.rest.dto.JugadorRequest;
 import py.edu.uc.lp3.service.ArmaService;
+import py.edu.uc.lp3.service.JugadorService;
 import py.edu.uc.lp3.service.ResultadoSimulacion;
 import py.edu.uc.lp3.service.SimulacionService;
 
@@ -23,10 +27,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Pruebas de integración de la Arquitectura en 3 Capas (Controller / Service / Repository con H2).
- * Valida operaciones CRUD completas, jerarquía de excepciones del dominio y simulación persistida.
- */
 @SpringBootTest
 @Transactional
 class ArmaCrudIntegrationTests {
@@ -35,20 +35,41 @@ class ArmaCrudIntegrationTests {
     private ArmaService armaService;
 
     @Autowired
+    private JugadorService jugadorService;
+
+    @Autowired
     private SimulacionService simulacionService;
 
     @Autowired
-    private JugadorRepository jugadorRepository;
+    private UIController uiController;
+
+    private ArmaRequest request(String nombre, float precio, int dano) {
+        ArmaRequest req = new ArmaRequest();
+        req.setNombre(nombre);
+        req.setPrecio(precio);
+        req.setDano(dano);
+        req.setPeso(3f);
+        req.setMunicionMax(30);
+        return req;
+    }
+
+    private JugadorRequest jugadorRequest(String alias) {
+        JugadorRequest req = new JugadorRequest();
+        req.setAlias(alias);
+        req.setBando("Terrorista");
+        req.setSalud(100);
+        req.setDinero(800);
+        return req;
+    }
 
     @Test
     void testCrearYBuscarArma() {
-        Arma nueva = new Arma("Galil AR", 1800f, 30, 3.75f, 35);
-        Arma guardada = armaService.crear(nueva);
+        Arma guardada = armaService.crear(request("Galil AR", 1800f, 30));
 
-        assertNotNull(guardada.getId(), "El ID debe ser generado automáticamente por H2");
+        assertNotNull(guardada.getId());
         assertEquals("Galil AR", guardada.getNombre());
         assertEquals(1800f, guardada.getPrecio());
-        assertEquals(35, guardada.getMunicionActual());
+        assertEquals(30, guardada.getMunicionActual());
 
         Arma encontrada = armaService.buscarPorId(guardada.getId());
         assertEquals(guardada.getId(), encontrada.getId());
@@ -58,36 +79,33 @@ class ArmaCrudIntegrationTests {
     @Test
     void testListarArmas() {
         List<Arma> armas = armaService.listarTodas();
-        assertNotNull(armas);
-        assertFalse(armas.isEmpty(), "La base de datos debe contener armas pre-cargadas por DataInitializer");
+        assertFalse(armas.isEmpty());
     }
 
     @Test
     void testRechazoPorNombreDuplicado() {
-        Arma arma1 = new Arma("SG 553", 3000f, 30, 3.9f, 30);
-        armaService.crear(arma1);
-
-        Arma duplicada = new Arma("sg 553", 2900f, 28, 3.8f, 30);
-        assertThrows(ReglaNegocioException.class, () -> armaService.crear(duplicada),
-                "Debe rechazar la creación si ya existe un arma con el mismo nombre");
+        armaService.crear(request("SG 553", 3000f, 30));
+        ArmaRequest duplicada = request("sg 553", 2900f, 28);
+        assertThrows(ReglaNegocioException.class, () -> armaService.crear(duplicada));
     }
 
     @Test
-    void testRechazoPorPrecioInvalido() {
-        // Validación de invariante en entidad: precio negativo
-        assertThrows(IllegalArgumentException.class, () -> new Arma("P90", -500f, 26, 2.6f, 50));
+    void testRechazoPorPrecioInvalidoEnUnSoloLugar() {
+        assertThrows(EconomiaInvalidaException.class, () -> armaService.crear(request("P90", -500f, 26)));
+        assertThrows(EconomiaInvalidaException.class, () -> armaService.crear(request("Cañón Láser", 20000f, 100)));
+    }
 
-        // Validación de regla de negocio en servicio: precio superior al límite de CS2 ($16,000)
-        assertThrows(EconomiaInvalidaException.class, () -> new Arma("Cañón Láser", 20000f, 100, 5f, 10));
+    @Test
+    void testRechazoPorDanoInvalido() {
+        assertThrows(ReglaNegocioException.class, () -> armaService.crear(request("AWP Rota", 4750f, -15)));
     }
 
     @Test
     void testActualizarArma() {
-        Arma arma = new Arma("FAMAS", 2050f, 30, 3.4f, 25);
-        Arma creada = armaService.crear(arma);
+        Arma creada = armaService.crear(request("FAMAS", 2050f, 30));
+        ArmaRequest datos = request("FAMAS Burst", 2100f, 32);
 
-        Arma datosNuevos = new Arma("FAMAS Burst", 2100f, 32, 3.4f, 25);
-        Arma actualizada = armaService.actualizar(creada.getId(), datosNuevos);
+        Arma actualizada = armaService.actualizar(creada.getId(), datos);
 
         assertEquals("FAMAS Burst", actualizada.getNombre());
         assertEquals(2100f, actualizada.getPrecio());
@@ -96,112 +114,131 @@ class ArmaCrudIntegrationTests {
 
     @Test
     void testActualizacionParcialPatch() {
-        Arma arma = new Arma("MP5-SD", 1500f, 27, 2.9f, 30);
-        Arma creada = armaService.crear(arma);
-
+        Arma creada = armaService.crear(request("MP5-SD", 1500f, 27));
         Map<String, Object> patch = new HashMap<>();
         patch.put("precio", 1400f);
         patch.put("dano", 29);
 
         Arma parcheada = armaService.actualizarParcial(creada.getId(), patch);
+
         assertEquals(1400f, parcheada.getPrecio());
         assertEquals(29, parcheada.getDano());
-        assertEquals("MP5-SD", parcheada.getNombre()); // Nombre preservado
+        assertEquals("MP5-SD", parcheada.getNombre());
     }
 
     @Test
     void testEliminarArma() {
-        Arma arma = new Arma("MP7", 1500f, 29, 2.8f, 30);
-        Arma creada = armaService.crear(arma);
-        Long id = creada.getId();
-
-        armaService.eliminar(id);
-        assertThrows(RecursoNoEncontradoException.class, () -> armaService.buscarPorId(id),
-                "El arma eliminada no debe poder encontrarse");
+        Arma creada = armaService.crear(request("MP7", 1500f, 29));
+        armaService.eliminar(creada.getId());
+        assertThrows(RecursoNoEncontradoException.class, () -> armaService.buscarPorId(creada.getId()));
     }
 
     @Test
     void testOperacionesDeNegocioDispararYRecargar() {
-        Arma arma = new Arma("M249", 5200f, 32, 7.5f, 100);
-        Arma creada = armaService.crear(arma);
-        Long id = creada.getId();
+        Arma creada = armaService.crear(request("M249", 5200f, 32));
 
-        // Disparo con persistencia en BD
-        String resDisparo = armaService.dispararArma(id, 20, false);
-        assertTrue(resDisparo.contains("disparó"));
+        String resultado = armaService.dispararArma(creada.getId(), 20, false);
+        assertTrue(resultado.contains("disparó"));
+        assertEquals(29, armaService.buscarPorId(creada.getId()).getMunicionActual());
 
-        Arma postDisparo = armaService.buscarPorId(id);
-        assertEquals(99, postDisparo.getMunicionActual());
-
-        // Recarga con persistencia en BD
-        Arma recargada = armaService.recargarArma(id);
-        assertEquals(100, recargada.getMunicionActual());
+        Arma recargada = armaService.recargarArma(creada.getId());
+        assertEquals(30, recargada.getMunicionActual());
     }
 
     @Test
     void testPersistirFrancotiradorPolimorfico() {
-        Francotirador sniper = new Francotirador("SSG 08 Scout", 1700f, 88, 3.6f, 10, 4);
-        Arma guardada = armaService.crear(sniper);
+        ArmaRequest req = request("SSG 08 Scout", 1700f, 88);
+        req.setTipo("FRANCOTIRADOR");
+        req.setPeso(3.6f);
+        req.setMunicionMax(10);
+        req.setZoom(4);
+
+        Arma guardada = armaService.crear(req);
 
         assertNotNull(guardada.getId());
-        assertEquals("SSG 08 Scout", guardada.getNombre());
+        assertInstanceOf(Francotirador.class, guardada);
         assertTrue(guardada.describirComportamiento().contains("Francotirador"));
         assertEquals("FRANCOTIRADOR", guardada.getTipo());
     }
 
     @Test
-    void testJerarquiaExcepcionHija1MunicionAgotada() {
-        // Crear arma con 1 bala
-        Arma arma = new Arma("Arma UnTiro", 1000f, 50, 2f, 1);
-        Arma creada = armaService.crear(arma);
+    void testJerarquiaExcepcionHija1MunicionAgotadaEnUnPaso() {
+        Arma creada = armaService.crear(request("Fusil Sin Balas", 1000f, 50));
 
-        // Disparo 1: consume la única bala
-        armaService.dispararArma(creada.getId(), null, null);
+        armaService.actualizarParcial(creada.getId(), Map.of("municionActual", 0));
         assertEquals(0, armaService.buscarPorId(creada.getId()).getMunicionActual());
 
-        // Disparo 2: debe lanzar la excepción hija 1 del dominio
-        assertThrows(MunicionAgotadaException.class, () -> {
-            armaService.dispararArma(creada.getId(), null, null);
-        }, "Debe lanzar MunicionAgotadaException cuando se intenta disparar con 0 balas");
+        assertThrows(MunicionAgotadaException.class,
+                () -> armaService.dispararArma(creada.getId(), null, null));
     }
 
     @Test
     void testJerarquiaExcepcionHija2EconomiaInvalida() {
-        // Debe lanzar la excepción hija 2 del dominio al superar $16,000
-        assertThrows(EconomiaInvalidaException.class, () -> {
-            new Arma("AWP Dragon Lore", 25000f, 115, 4.5f, 10);
-        }, "Debe lanzar EconomiaInvalidaException al superar el tope de $16,000 en CS2");
+        ArmaRequest req = request("AWP Dragon Lore", 25000f, 115);
+        assertThrows(EconomiaInvalidaException.class, () -> armaService.crear(req));
+    }
+
+    @Test
+    void testValidacionDeJugadoresEnService() {
+        JugadorRequest valido = jugadorRequest("Fallen");
+        assertEquals("Fallen", jugadorService.crear(valido).getAlias());
+
+        JugadorRequest sinAlias = jugadorRequest("   ");
+        JugadorRequest saludMala = jugadorRequest("Fallen 2");
+        saludMala.setSalud(105);
+        JugadorRequest dineroMalo = jugadorRequest("Fallen 3");
+        dineroMalo.setDinero(16001);
+
+        assertThrows(ReglaNegocioException.class, () -> jugadorService.crear(sinAlias));
+        assertThrows(ReglaNegocioException.class, () -> jugadorService.crear(saludMala));
+        assertThrows(ReglaNegocioException.class, () -> jugadorService.crear(dineroMalo));
     }
 
     @Test
     void testSimulacionCombatePersistidaEnH2() {
-        // Crear las 3 clases participantes
-        Francotirador sniper = new Francotirador("AWP Sim", 4750f, 115, 4.3f, 10, 2);
-        Pistola pistola = new Pistola("Deagle Sim", 700f, 53, 1.8f, 7, "Semiautomático", 7);
-        Jugador jugador = new Jugador("Victima CS2", "Terrorista", 100, 800);
+        ArmaRequest sniperReq = request("AWP Sim", 4750f, 115);
+        sniperReq.setTipo("FRANCOTIRADOR");
+        sniperReq.setPeso(4.3f);
+        sniperReq.setMunicionMax(10);
+        sniperReq.setZoom(2);
 
-        Arma sniperGuardado = armaService.crear(sniper);
-        Arma pistolaGuardada = armaService.crear(pistola);
-        Jugador jugadorGuardado = jugadorRepository.save(jugador);
+        ArmaRequest pistolaReq = request("Deagle Sim", 700f, 53);
+        pistolaReq.setTipo("PISTOLA");
+        pistolaReq.setPeso(1.8f);
+        pistolaReq.setMunicionMax(7);
+        pistolaReq.setModoDisparo("Semiautomático");
+        pistolaReq.setCargador(7);
 
-        // Ejecutar simulación que aplica Regla 1 (consumo/balística) y Regla 2 (impacto/salud)
+        Arma sniper = armaService.crear(sniperReq);
+        Arma pistola = armaService.crear(pistolaReq);
+        Jugador jugador = jugadorService.crear(jugadorRequest("Víctima CS2"));
+
         ResultadoSimulacion resultado = simulacionService.ejecutarSimulacionCombate(
-                sniperGuardado.getId(), pistolaGuardada.getId(), jugadorGuardado.getId(), 30, true);
+                sniper.getId(), pistola.getId(), jugador.getId(), 30, true);
 
-        assertNotNull(resultado);
         assertTrue(resultado.isPersistidoEnH2());
-        assertEquals(9, resultado.getFrancotiradorMunicionDespues(), "Francotirador gastó 1 bala");
-        assertEquals(6, resultado.getPistolaMunicionDespues(), "Pistola gastó 1 bala");
-        assertTrue(resultado.getDanioTotalRecibido() > 0, "Debe haber infligido daño");
-        assertTrue(resultado.getJugadorSaludDespues() < 100, "La salud del jugador debe haber disminuido");
+        assertEquals(9, resultado.getFrancotiradorMunicionDespues());
+        assertEquals(6, resultado.getPistolaMunicionDespues());
+        assertTrue(resultado.getDanioTotalRecibido() > 0);
+        assertEquals(0, resultado.getJugadorSaludDespues());
+        assertFalse(resultado.isJugadorSobrevive());
 
-        // Verificar persistencia de verdad en H2 (consultar de nuevo desde la BD)
-        Arma sniperPost = armaService.buscarPorId(sniperGuardado.getId());
-        Arma pistolaPost = armaService.buscarPorId(pistolaGuardada.getId());
-        Jugador jugadorPost = jugadorRepository.findById(jugadorGuardado.getId()).orElseThrow();
+        assertEquals(9, armaService.buscarPorId(sniper.getId()).getMunicionActual());
+        assertEquals(6, armaService.buscarPorId(pistola.getId()).getMunicionActual());
+        assertEquals(0, jugadorService.buscarPorId(jugador.getId()).getSalud());
+    }
 
-        assertEquals(9, sniperPost.getMunicionActual(), "La munición del sniper debe estar persistida en H2");
-        assertEquals(6, pistolaPost.getMunicionActual(), "La munición de la pistola debe estar persistida en H2");
-        assertEquals(resultado.getJugadorSaludDespues(), jugadorPost.getSalud(), "La salud debe estar persistida en H2");
+    @Test
+    void testEndpointInterfazLeeEstadoPersistido() {
+        Francotirador persistido = armaService.primerFrancotirador();
+        armaService.actualizarParcial(persistido.getId(), Map.of("municionActual", 3));
+
+        ResponseEntity<List<Map<String, Object>>> respuesta = uiController.listarElementosUI();
+        List<Map<String, Object>> elementos = respuesta.getBody();
+
+        assertNotNull(elementos);
+        assertEquals(2, elementos.size());
+        assertTrue(elementos.stream()
+                .anyMatch(item -> String.valueOf(item.get("mensajeUI")).contains("Munición en pantalla: 3/")));
     }
 }

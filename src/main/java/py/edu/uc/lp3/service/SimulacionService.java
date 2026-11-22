@@ -15,38 +15,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Servicio de Simulación del juego Counter-Strike 2.
- * Orquesta la simulación persistida articulando las 3 clases del modelado:
- * Francotirador (hija 1 de Arma), Pistola (hija 2 de Arma) y Jugador (otra familia).
- *
- * Implementa dos reglas de negocio de juego:
- * - Regla 1 (Balística y Munición): El disparo consume balas y calcula daño efectivo;
- *   si no hay munición, lanza MunicionAgotadaException.
- * - Regla 2 (Impacto y Salud): El combatiente recibe el daño acumulado hasta el piso de 0,
- *   afectando su estado vital (estaVivo).
- *
- * Los resultados se persisten en la base de datos relacional H2.
- */
 @Service
 public class SimulacionService {
 
     private final ArmaRepository armaRepository;
     private final JugadorRepository jugadorRepository;
+    private final ArmaService armaService;
+    private final JugadorService jugadorService;
 
-    public SimulacionService(ArmaRepository armaRepository, JugadorRepository jugadorRepository) {
+    public SimulacionService(ArmaRepository armaRepository, JugadorRepository jugadorRepository,
+                             ArmaService armaService, JugadorService jugadorService) {
         this.armaRepository = armaRepository;
         this.jugadorRepository = jugadorRepository;
+        this.armaService = armaService;
+        this.jugadorService = jugadorService;
     }
 
-    /**
-     * Ejecuta una simulación completa de ronda de combate CS2 y persiste el resultado.
-     */
     @Transactional
     public ResultadoSimulacion ejecutarSimulacionCombate(Long francotiradorId, Long pistolaId, Long jugadorId,
-                                                         Integer distanciaMetros, Boolean tiroALaCabeza) {
+                                                          Integer distanciaMetros, Boolean tiroALaCabeza) {
         int distancia = (distanciaMetros != null && distanciaMetros > 0) ? distanciaMetros : 35;
-        boolean headshot = (tiroALaCabeza != null) ? tiroALaCabeza : true;
+        boolean headshot = Boolean.TRUE.equals(tiroALaCabeza);
 
         Francotirador francotirador = obtenerFrancotirador(francotiradorId);
         Pistola pistola = obtenerPistola(pistolaId);
@@ -55,41 +44,37 @@ public class SimulacionService {
         ResultadoSimulacion resultado = new ResultadoSimulacion();
         resultado.setDescripcion("Simulación balística de combate CS2: enfrentamiento táctico contra combatiente.");
         resultado.setRegla1Aplicada("Regla 1 (Balística y Munición): Al disparar, el arma consume munición del cargador y calcula el daño efectivo con atenuación y multiplicadores; si la munición llega a cero, el arma bloquea el disparo con MunicionAgotadaException.");
-        resultado.setRegla2Aplicada("Regla 2 (Impacto y Salud Vital): El Jugador reduce sus puntos de salud según el daño balístico recibido hasta un piso de cero (salud = Math.max(0, salud - danio)), quedando eliminado si la salud llega a cero.");
+        resultado.setRegla2Aplicada("Regla 2 (Impacto y Salud Vital): El Jugador reduce sus puntos de salud según el daño balístico recibido hasta un piso de cero, quedando eliminado si la salud llega a cero.");
 
-        // 1. Participante Francotirador
         resultado.setFrancotiradorId(francotirador.getId());
         resultado.setFrancotiradorNombre(francotirador.getNombre());
         resultado.setFrancotiradorMunicionAntes(francotirador.getMunicionActual());
 
-        int danioFrancotirador = francotirador.calcularDanioEfectivo(distancia, headshot);
-        francotirador.disparar(distancia, headshot); // Disparo de dominio y consumo de munición
+        int danioFrancotirador = armaService.calcularDanioEfectivo(francotirador, distancia, headshot);
+        armaService.consumirMunicion(francotirador);
         resultado.setFrancotiradorMunicionDespues(francotirador.getMunicionActual());
         resultado.setFrancotiradorDanioInfligido(danioFrancotirador);
 
-        // 2. Participante Pistola
         resultado.setPistolaId(pistola.getId());
         resultado.setPistolaNombre(pistola.getNombre());
         resultado.setPistolaMunicionAntes(pistola.getMunicionActual());
 
         int distanciaPistola = Math.min(distancia, 15);
-        int danioPistola = pistola.calcularDanioEfectivo(distanciaPistola, false);
-        pistola.disparar(distanciaPistola, false); // Disparo de dominio y consumo de munición
+        int danioPistola = armaService.calcularDanioEfectivo(pistola, distanciaPistola, false);
+        armaService.consumirMunicion(pistola);
         resultado.setPistolaMunicionDespues(pistola.getMunicionActual());
         resultado.setPistolaDanioInfligido(danioPistola);
 
-        // 3. Participante Jugador
         resultado.setJugadorId(jugador.getId());
         resultado.setJugadorAlias(jugador.getAlias());
         resultado.setJugadorSaludAntes(jugador.getSalud());
 
         int danioTotal = danioFrancotirador + danioPistola;
-        jugador.recibirDanio(danioTotal); // Aplicación de Regla 2
+        aplicarDanio(jugador, danioTotal);
         resultado.setDanioTotalRecibido(danioTotal);
         resultado.setJugadorSaludDespues(jugador.getSalud());
-        resultado.setJugadorSobrevive(jugador.estaVivo());
+        resultado.setJugadorSobrevive(jugador.getSalud() > 0);
 
-        // 4. Persistencia garantizada en H2
         armaRepository.save(francotirador);
         armaRepository.save(pistola);
         jugadorRepository.save(jugador);
@@ -97,9 +82,6 @@ public class SimulacionService {
         return resultado;
     }
 
-    /**
-     * Consulta el estado persistido actual de los recursos que participan de la simulación.
-     */
     @Transactional(readOnly = true)
     public Map<String, Object> obtenerEstadoSimulacion() {
         Map<String, Object> estado = new HashMap<>();
@@ -108,6 +90,15 @@ public class SimulacionService {
         estado.put("armas", armaRepository.findAll());
         estado.put("jugadores", jugadorRepository.findAll());
         return estado;
+    }
+
+    private void aplicarDanio(Jugador jugador, int cantidad) {
+        if (cantidad < 0) {
+            throw new ReglaNegocioException("El daño recibido no puede ser negativo.");
+        }
+        int saludFinal = Math.max(0, jugador.getSalud() - cantidad);
+        jugadorService.validarSalud(saludFinal);
+        jugador.setSalud(saludFinal);
     }
 
     private Francotirador obtenerFrancotirador(Long id) {
@@ -119,14 +110,7 @@ public class SimulacionService {
             }
             throw new ReglaNegocioException("El arma con ID " + id + " no es de tipo Francotirador.");
         }
-        // Buscar el primer Francotirador disponible o crear uno por defecto
-        List<Arma> todas = armaRepository.findAll();
-        for (Arma a : todas) {
-            if (a instanceof Francotirador f) {
-                return f;
-            }
-        }
-        return armaRepository.save(new Francotirador("AWP", 4750f, 115, 4.3f, 10, 2));
+        return armaService.primerFrancotirador();
     }
 
     private Pistola obtenerPistola(Long id) {
@@ -138,21 +122,17 @@ public class SimulacionService {
             }
             throw new ReglaNegocioException("El arma con ID " + id + " no es de tipo Pistola.");
         }
-        List<Arma> todas = armaRepository.findAll();
-        for (Arma a : todas) {
-            if (a instanceof Pistola p) {
-                return p;
-            }
-        }
-        return armaRepository.save(new Pistola("Desert Eagle", 700f, 53, 1.8f, 7, "Semiautomático", 7));
+        return armaRepository.findAll().stream()
+                .filter(Pistola.class::isInstance)
+                .map(Pistola.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new RecursoNoEncontradoException("No hay pistolas persistidas."));
     }
 
     private Jugador obtenerJugador(Long id) {
         if (id != null) {
-            return jugadorRepository.findById(id)
-                    .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró el Jugador con ID: " + id));
+            return jugadorService.buscarPorId(id);
         }
-        return jugadorRepository.findAll().stream().findFirst()
-                .orElseGet(() -> jugadorRepository.save(new Jugador("s1mple", "Antiterrorista", 100, 16000)));
+        return jugadorService.primerJugador();
     }
 }

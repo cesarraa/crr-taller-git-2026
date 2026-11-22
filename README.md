@@ -7,11 +7,31 @@ Licencia: **Apache License 2.0** (ver archivo [LICENSE](LICENSE)).
 
 ---
 
-## Enlace al Commit de la Solución (POO-08)
+## Enlace al Commit de la Solución (POO-08 y su corrección)
 
-- **Commit de la entrega POO-08:** https://github.com/cesarraa/crr-taller-git-2026/commit/3e361a4c9d3f3d5ebb1ba7ad69a7e85854c2d0d7
+- **Commit de la corrección POO-08:** se indica en el último commit de este historial (actualización de este enlace).
+- **Commit original de la entrega POO-08:** https://github.com/cesarraa/crr-taller-git-2026/commit/3e361a4c9d3f3d5ebb1ba7ad69a7e85854c2d0d7
 - **Commit previo POO-07 (Interfaces):** https://github.com/cesarraa/crr-taller-git-2026/commit/4d0095d
 - **Commit previo POO-06 (Herencia/Paquetes):** https://github.com/cesarraa/crr-taller-git-2026/commit/62066c81e70ff5432d503aabdc4122af595ff1e7
+
+---
+
+## Cierre de las observaciones de la corrección POO-08
+
+| Observación de la corrección | Cómo quedó cerrada |
+|---|---|
+| `JugadorController` usaba `JugadorRepository` directamente | Se creó `JugadorService`; el controller solo traduce HTTP y el repositorio se usa solo desde services. |
+| El dominio lanzaba excepciones y contenía reglas de negocio | `Arma`, `Jugador` y sus hijas quedaron como estado y accessors. Validaciones, daño, munición y excepciones están en `ArmaService`, `JugadorService` y `SimulacionService`. |
+| Atributos `protected` y constructor vacío `public` | Todos los campos son `private`; el constructor requerido por JPA es `protected`. La entrada JSON usa DTOs (`ArmaRequest`, `JugadorRequest`). |
+| Precio negativo respondía distinto en POST y PATCH | Un única regla en `ArmaService`: todo precio fuera de `0..16000` lanza `EconomiaInvalidaException` (422) en POST, PUT y PATCH. |
+| `Arma` dejó de ser abstracta | Volvió a ser `abstract`; AK-47 y M4A4 son ahora `Fusil`, una hija concreta. |
+| `GET /ui/elementos` armaba las instancias en el método | Ahora lee el `Jugador` y el `Francotirador` persistidos a través de los services; un test comprueba que refleja la munición guardada. |
+| `Granada()` llamaba al padre con daño 0 | El constructor vacío usa daño 50, un estado legal. |
+| El constructor simple de `Francotirador` repetía la lógica del zoom | Delega con `this(...)` en el constructor completo. |
+| El 409 de munición agotada exigía 31 disparos | El pedido `10b` deja el cargador en 0 y el pedido `11` provoca el 409 en un solo disparo. |
+| La clave `tipo` aparecía dos veces en el JSON | `getTipo()` lleva `@JsonIgnore`; el único `tipo` es el discriminador de Jackson. |
+| Faltaban respuestas de "Qué hay que pensar" | Se agregaron recurso/verbo, identidad, justificación de `SINGLE_TABLE` y el valor de depender de la interfaz del repositorio. |
+| El recorrido de Insomnia saltaba del pedido 13 al 15 | El recorrido nombra ahora los 17 pedidos, incluido el `14 - GET /ui/renderizar` y el nuevo `10b`. |
 
 ---
 
@@ -20,7 +40,6 @@ Licencia: **Apache License 2.0** (ver archivo [LICENSE](LICENSE)).
 El proyecto utiliza **Maven Wrapper** y **Spring Boot 4.1.1** (compilado para Java 21+):
 
 ```bash
-# En Windows / Linux / macOS:
 ./mvnw spring-boot:run
 ```
 
@@ -35,72 +54,75 @@ Una vez iniciado, el servicio queda disponible en:
 
 ## 2. Propiedades de H2 y JPA Explicadas (`application.properties`)
 
-Cada línea del archivo `src/main/resources/application.properties` cumple una función específica en el ciclo de persistencia:
-
-- `spring.application.name=cs2`: Define el identificador lógico de la aplicación en el ecosistema Spring.
-- `spring.datasource.url=jdbc:h2:mem:cs2db`: Configura la base de datos relacional H2 en modo memoria (`mem`), aislada bajo el nombre `cs2db`.
-- `spring.datasource.driverClassName=org.h2.Driver`: Especifica el driver JDBC oficial para comunicarse con el motor H2.
-- `spring.datasource.username=sa`: Establece el usuario administrador del sistema (*System Administrator*) para la conexión.
-- `spring.datasource.password=`: Deja la contraseña vacía, facilitando el acceso rápido en el entorno de desarrollo y pruebas.
-- `spring.jpa.database-platform=org.hibernate.dialect.H2Dialect`: Instruye a Hibernate a utilizar el dialecto SQL específico de H2 para optimizar las sentencias generadas.
-- `spring.jpa.hibernate.ddl-auto=update`: Hibernate crea automáticamente las tablas al arrancar según las entidades `@Entity` y actualiza el esquema sin destruir los datos durante la sesión.
-- `spring.jpa.show-sql=true`: Muestra en la consola de comandos cada consulta SQL ejecutada (SELECT, INSERT, UPDATE, DELETE) para depuración.
-- `spring.jpa.properties.hibernate.format_sql=true`: Aplica formato estructurado e identado a las consultas SQL impresas en consola para facilitar su lectura.
-- `spring.h2.console.enabled=true`: Habilita la interfaz web interactiva de administración de H2.
-- `spring.h2.console.path=/h2-console`: Determina la ruta web mediante la cual se accede a la consola gráfica desde el navegador.
+- `spring.application.name=cs2`: identificador lógico de la aplicación.
+- `spring.datasource.url=jdbc:h2:mem:cs2db`: base H2 en memoria, aislada bajo el nombre `cs2db`.
+- `spring.datasource.driverClassName=org.h2.Driver`: driver JDBC de H2.
+- `spring.datasource.username=sa`: usuario administrador de la conexión.
+- `spring.datasource.password=`: contraseña vacía, para desarrollo y pruebas.
+- `spring.jpa.database-platform=org.hibernate.dialect.H2Dialect`: dialecto SQL de H2 para Hibernate.
+- `spring.jpa.hibernate.ddl-auto=update`: Hibernate crea/actualiza las tablas al arrancar según las entidades `@Entity`.
+- `spring.jpa.show-sql=true`: muestra las sentencias SQL ejecutadas para depuración.
+- `spring.jpa.properties.hibernate.format_sql=true`: formatea esas sentencias en consola.
+- `spring.h2.console.enabled=true`: habilita la consola web de H2.
+- `spring.h2.console.path=/h2-console`: ruta de acceso a la consola.
 
 ---
 
 ## 3. Organización de Paquetes (Arquitectura en 3 Capas)
 
-Siguiendo el estándar de paquetes del template de la cátedra ([lp3-template-tp](https://github.com/alefq/lp3-template-tp)):
-
 ```text
 src/main/java/py/edu/uc/lp3/
 ├── Cs2Application.java                     # Arranque de Spring Boot (@SpringBootApplication)
-├── config/                                 # Configuración y Carga Inicial
-│   └── DataInitializer.java               # Pre-carga de datos canónicos CS2 en H2 (@Configuration)
-├── domain/                                 # Capa de Dominio y Entidades JPA
-│   ├── Arma.java                           # Entidad base persistente (@Entity, SINGLE_TABLE, Jackson polimórfico)
-│   ├── Francotirador.java                  # Especialización de Arma e implementa UICapable (@Entity, Hija 1)
-│   ├── Pistola.java                        # Especialización de Arma (@Entity, Hija 2)
-│   ├── Escopeta.java                       # Especialización de Arma (@Entity)
-│   ├── Subfusil.java                       # Especialización de Arma (@Entity)
-│   ├── Granada.java                        # Especialización de Arma (@Entity)
-│   ├── Jugador.java                        # Entidad independiente e implementa UICapable (@Entity)
-│   └── UICapable.java                      # Interfaz de dominio con método default (POO-07)
-├── exception/                              # Jerarquía de Excepciones del Dominio
-│   ├── DominioCS2Exception.java            # Clase base de la jerarquía (Unchecked / RuntimeException)
-│   ├── MunicionAgotadaException.java       # Excepción Hija 1 (Estado de arma sin balas -> 409 Conflict)
-│   ├── EconomiaInvalidaException.java      # Excepción Hija 2 (Violación de tope de $16,000 -> 422 Unprocessable)
-│   ├── RecursoNoEncontradoException.java   # Mapeada a HTTP 404 Not Found
-│   └── ReglaNegocioException.java          # Mapeada a HTTP 400 Bad Request
-├── repository/                             # Capa de Persistencia (Spring Data JPA)
+├── config/
+│   └── DataInitializer.java               # Carga inicial de armas y jugadores en H2
+├── domain/                                 # Entidades: solo estado, sin reglas ni excepciones
+│   ├── Arma.java                           # Entidad base abstracta (@Entity, SINGLE_TABLE, Jackson)
+│   ├── Fusil.java                          # Hija concreta; AK-47 y M4A4
+│   ├── Francotirador.java                  # Hija de Arma e implementa UICapable
+│   ├── Pistola.java                        # Hija de Arma
+│   ├── Escopeta.java                       # Hija de Arma
+│   ├── Subfusil.java                       # Hija de Arma
+│   ├── Granada.java                        # Hija de Arma
+│   ├── GranadaFlash.java                   # Hija de Granada
+│   ├── GranadaHumo.java                    # Hija de Granada
+│   ├── GranadaIncendiaria.java             # Hija de Granada
+│   ├── GranadaTipo.java                    # Enum de tipos de granada
+│   ├── Jugador.java                        # Entidad independiente e implementa UICapable
+│   └── UICapable.java                      # Interfaz de dominio con default method (POO-07)
+├── exception/                              # Jerarquía de excepciones lanzadas por los services
+│   ├── DominioCS2Exception.java            # Base unchecked
+│   ├── MunicionAgotadaException.java       # Hija 1 -> 409 Conflict
+│   ├── EconomiaInvalidaException.java      # Hija 2 -> 422 Unprocessable Entity
+│   ├── RecursoNoEncontradoException.java   # 404 Not Found
+│   └── ReglaNegocioException.java          # 400 Bad Request
+├── repository/                             # Interfaces Spring Data JPA
 │   ├── ArmaRepository.java                 # JpaRepository<Arma, Long> con consultas derivadas
-│   └── JugadorRepository.java              # JpaRepository<Jugador, Long> para combatientes
-├── service/                                # Capa de Lógica de Negocio y Simulación (Service)
-│   ├── ArmaService.java                    # Reglas de validación, transaccionalidad y CRUD (@Service)
-│   ├── SimulacionService.java              # Orquesta simulación balística con las 2 reglas (@Service)
-│   └── ResultadoSimulacion.java            # DTO que transporta los resultados observables y persistidos
-└── rest/controller/                        # Capa de Presentación REST (Controladores HTTP)
-    ├── IndexController.java                # GET / (Catálogo de endpoints y metadata)
-    ├── ArmaCrudController.java             # CRUD REST completo en /api/armas (Padre e Hijas)
-    ├── SimulacionController.java           # Endpoint /api/simulacion/combate y /estado
-    ├── JugadorController.java              # Endpoints en /api/jugadores
-    ├── GlobalExceptionHandler.java         # @RestControllerAdvice con handler dedicado por tipo
-    ├── UIController.java                   # GET /ui/elementos y /ui/renderizar (consumo vía interfaz)
-    └── ArmaController.java                 # Endpoints históricos de POO-06
+│   └── JugadorRepository.java              # JpaRepository<Jugador, Long>
+├── service/                                # Validaciones, reglas del juego y transacciones
+│   ├── ArmaService.java                    # CRUD, balística, munición y construcción de subtipos
+│   ├── JugadorService.java                 # CRUD y validación de combatientes
+│   ├── SimulacionService.java              # Orquesta la simulación persistida de las 2 reglas
+│   └── ResultadoSimulacion.java            # DTO del resultado de la simulación
+└── rest/
+    ├── controller/
+    │   ├── IndexController.java            # GET /
+    │   ├── ArmaCrudController.java         # CRUD REST en /api/armas
+    │   ├── ArmaController.java             # Endpoints históricos de demostración POO-06/07
+    │   ├── JugadorController.java          # Endpoints en /api/jugadores
+    │   ├── SimulacionController.java       # /api/simulacion/combate y /estado
+    │   ├── UIController.java               # /ui/elementos y /ui/renderizar
+    │   └── GlobalExceptionHandler.java     # Handler dedicado por tipo de excepción
+    └── dto/
+        ├── ArmaRequest.java                # Entrada JSON del arma (sin lógica)
+        └── JugadorRequest.java             # Entrada JSON del jugador (sin lógica)
 ```
 
 ---
 
 ## 4. Diagrama de Clases Mermaid
 
-El siguiente diagrama modela fielmente la **herencia** (`--|>`), **implementación de interfaces** (`..|>`), **asociaciones de uso e inyección** (`-->`), y la **jerarquía de excepciones**:
-
 ```mermaid
 classDiagram
-    %% Protocolo e Interfaz
     class UICapable {
         <<interface>>
         +getImagen()* String
@@ -110,248 +132,204 @@ classDiagram
         +renderizarUI() String
     }
 
-    %% Familia Persistida (Padre y dos Hijas)
     class Arma {
-        #Long id
-        #String nombre
-        #float precio
-        #int dano
-        #float peso
-        #int municionMax
-        #int municionActual
-        +Arma()
-        +Arma(nombre, precio, dano)
-        +Arma(nombre, precio, dano, peso, municionMax)
-        +describirComportamiento() String
-        +disparar() String
-        +disparar(distanciaMetros) String
-        +disparar(distanciaMetros, tiroALaCabeza) String
-        +calcularDanioEfectivo(distancia, headshot) int
-        +recargar() String
+        <<abstract>>
+        -Long id
+        -String nombre
+        -float precio
+        -int dano
+        -float peso
+        -int municionMax
+        -int municionActual
+        #Arma()
+        +describirComportamiento()* String
         +getTipo() String
     }
 
+    class Fusil {
+        +describirComportamiento() String
+    }
     class Francotirador {
         -int zoom
-        +Francotirador()
-        +Francotirador(nombre, precio, dano, zoom)
-        +Francotirador(nombre, precio, dano, peso, municionMax, zoom)
         +describirComportamiento() String
-        +calcularDanioEfectivo(distancia, headshot) int
-        +activarZoom() String
         +renderizarUI() String
     }
-
     class Pistola {
         -String modoDisparo
         -int cargador
-        +Pistola()
-        +Pistola(nombre, precio, dano)
-        +Pistola(nombre, precio, dano, peso, municionMax, modoDisparo, cargador)
         +describirComportamiento() String
-        +calcularDanioEfectivo(distancia, headshot) int
     }
-
-    %% Familia Independiente
     class Jugador {
         -Long id
         -String alias
         -String bando
         -int salud
         -int dinero
-        +Jugador()
-        +Jugador(alias, bando, salud, dinero)
-        +recibirDanio(cantidad) void
-        +estaVivo() boolean
         +getImagen() String
         +getPosicion() String
     }
 
-    %% Relaciones de Dominio
-    Arma <|-- Francotirador : Herencia ("Es un")
-    Arma <|-- Pistola : Herencia ("Es un")
+    Arma <|-- Fusil : Herencia
+    Arma <|-- Francotirador : Herencia
+    Arma <|-- Pistola : Herencia
     UICapable <|.. Francotirador : Reemplaza default
-    UICapable <|.. Jugador : Usa default method
+    UICapable <|.. Jugador : Usa default
 
-    %% Capa de Persistencia
     class ArmaRepository {
         <<interface>>
-        +findByNombreIgnoreCase(nombre) Optional~Arma~
         +existsByNombreIgnoreCase(nombre) boolean
         +existsByNombreIgnoreCaseAndIdNot(nombre, id) boolean
     }
     class JugadorRepository {
         <<interface>>
-        +findByAliasIgnoreCase(alias) Optional~Jugador~
     }
 
-    %% Capa de Negocio / Servicios
     class ArmaService {
         -ArmaRepository armaRepository
-        +listarTodas() List~Arma~
-        +buscarPorId(id) Arma
-        +crear(nuevaArma) Arma
-        +actualizar(id, datosNuevos) Arma
+        +crear(ArmaRequest) Arma
+        +actualizar(id, ArmaRequest) Arma
         +actualizarParcial(id, campos) Arma
-        +eliminar(id) void
         +dispararArma(id, distancia, headshot) String
         +recargarArma(id) Arma
+        +calcularDanioEfectivo(arma, distancia, headshot) int
+        +consumirMunicion(arma) void
     }
-
-    class SimulacionService {
-        -ArmaRepository armaRepository
+    class JugadorService {
         -JugadorRepository jugadorRepository
+        +crear(JugadorRequest) Jugador
+        +buscarPorId(id) Jugador
+        +validarDatos(JugadorRequest) void
+    }
+    class SimulacionService {
         +ejecutarSimulacionCombate(sniperId, pistolaId, jugadorId, dist, headshot) ResultadoSimulacion
         +obtenerEstadoSimulacion() Map
     }
 
-    ArmaService --> ArmaRepository : Inyecta
-    SimulacionService --> ArmaRepository : Inyecta
-    SimulacionService --> JugadorRepository : Inyecta
+    ArmaService --> ArmaRepository : Usa interfaz
+    JugadorService --> JugadorRepository : Usa interfaz
+    SimulacionService --> ArmaService : Regla 1
+    SimulacionService --> JugadorService : Regla 2
 
-    %% Capa de Controladores REST
-    class ArmaCrudController {
-        -ArmaService armaService
-        +listarArmas() ResponseEntity
-        +obtenerArmaPorId(id) ResponseEntity
-        +crearArma(nuevaArma) ResponseEntity
-        +actualizarArma(id, datos) ResponseEntity
-        +actualizarParcial(id, campos) ResponseEntity
-        +eliminarArma(id) ResponseEntity
-        +dispararArma(id, dist, hs) ResponseEntity
-    }
+    class ArmaCrudController
+    class JugadorController
+    class UIController
+    class SimulacionController
+    ArmaCrudController --> ArmaService
+    JugadorController --> JugadorService
+    UIController --> ArmaService
+    UIController --> JugadorService
+    SimulacionController --> SimulacionService
 
-    class SimulacionController {
-        -SimulacionService simulacionService
-        +simularCombate(sniperId, pistolaId, jugadorId, dist, hs) ResponseEntity
-        +obtenerEstado() ResponseEntity
-    }
-
-    ArmaCrudController --> ArmaService : Dispara lógica
-    SimulacionController --> SimulacionService : Dispara simulación
-
-    %% Jerarquía de Excepciones
     class RuntimeException {
         <<Java Base>>
     }
     class DominioCS2Exception {
-        <<Clase Base Dominio>>
+        <<Base Dominio>>
     }
     class MunicionAgotadaException {
         <<Hija 1>>
-        -String nombreArma
-        -int municionActual
-        -int municionMax
     }
     class EconomiaInvalidaException {
         <<Hija 2>>
-        -float precio
-        -float limiteMaximo
     }
+    class ReglaNegocioException
+    class RecursoNoEncontradoException
 
-    RuntimeException <|-- DominioCS2Exception : Herencia
-    DominioCS2Exception <|-- MunicionAgotadaException : Especialización
-    DominioCS2Exception <|-- EconomiaInvalidaException : Especialización
+    RuntimeException <|-- DominioCS2Exception
+    DominioCS2Exception <|-- MunicionAgotadaException
+    DominioCS2Exception <|-- EconomiaInvalidaException
+    DominioCS2Exception <|-- ReglaNegocioException
+    DominioCS2Exception <|-- RecursoNoEncontradoException
 
     class GlobalExceptionHandler {
-        +manejarMunicionAgotada(ex) 409 Conflict
-        +manejarEconomiaInvalida(ex) 422 Unprocessable
-        +manejarRecursoNoEncontrado(ex) 404 Not Found
-        +manejarArgumentoIlegal(ex) 400 Bad Request
+        +409 MunicionAgotadaException
+        +422 EconomiaInvalidaException
+        +400 ReglaNegocioException
+        +404 RecursoNoEncontradoException
     }
-
-    GlobalExceptionHandler ..> MunicionAgotadaException : Handler HTTP
-    GlobalExceptionHandler ..> EconomiaInvalidaException : Handler HTTP
+    GlobalExceptionHandler ..> MunicionAgotadaException : Handler por tipo
+    GlobalExceptionHandler ..> EconomiaInvalidaException : Handler por tipo
 ```
 
 ---
 
 ## 5. Las Dos Reglas de Negocio en una Frase Cada Una
 
-1. **Regla 1 (Balística y Consumo de Munición del Arma — Clases `Arma`, `Francotirador` y `Pistola`):**  
-   > *Al disparar, el arma consume munición de su cargador y calcula el daño balístico efectivo aplicando atenuación por distancia y multiplicadores tácticos según su tipo (`Francotirador` letal a larga distancia con zoom; `Pistola` a corta distancia); si la munición llega a cero, el arma bloquea el disparo y lanza `MunicionAgotadaException`.*
+1. **Regla 1 (Balística y consumo de munición — `ArmaService` sobre `Fusil`, `Francotirador` y `Pistola`):** al disparar se calcula el daño efectivo según distancia y subtipo, se descuenta una bala del cargador y, si no queda munición, `ArmaService` lanza `MunicionAgotadaException`.
+2. **Regla 2 (Impacto y salud vital — `SimulacionService` sobre `Jugador`):** el daño de ambos disparos se acumula y `SimulacionService` fija la salud del jugador en `max(0, salud - danio)`, dejando a cero al combatiente eliminado.
 
-2. **Regla 2 (Impacto y Salud Vital del Combatiente — Clase `Jugador`):**  
-   > *Cuando un `Jugador` recibe el impacto del proyectil disparado por un arma, su nivel de salud se reduce en la cantidad exacta del daño recibido hasta un piso inquebrantable de cero (`salud = Math.max(0, salud - danio)`), cambiando su estado vital a eliminado (`estaVivo() == false`) si la salud llega a cero.*
+`SimulacionService.ejecutarSimulacionCombate` dispara ambas reglas sobre tres objetos y guarda los tres estados en H2.
 
 ---
 
-## 6. Respuestas a "Qué hay que pensar" (Consignas del Enunciado)
+## 6. Respuestas a "Qué hay que pensar"
 
-### 1. Protocolo del dominio (`interface`)
-- **¿Qué interface es y cómo se llama?** Se utiliza la interfaz `UICapable` (creada en POO-07), ubicada en `py.edu.uc.lp3.domain`.
-- **¿Qué endpoints la usan?** Los endpoints `GET /ui/elementos` y `GET /ui/renderizar` de `UIController`.
-- **¿Puede hablar con instancias de familias distintas?** Sí. En `GET /ui/elementos`, el controlador maneja una colección polimórfica homogénea `List<UICapable>` que contiene tanto a un `Francotirador` (familia `Arma`) como a un `Jugador` (familia `Jugador`), invocando el mensaje `renderizarUI()` de forma transparente e independiente de sus jerarquías concretas.
+### 1. Recurso y verbo
+El sustantivo de la API es **el arma**: la colección es `/api/armas`. `POST` crea en la colección; `GET /api/armas` lista y `GET /api/armas/{id}` lee un ítem; `PUT` y `PATCH` actualizan; `DELETE` quita el ítem. La simulación es otro recurso, `/api/simulacion/combate`, creado con `POST` y consultado con `GET /api/simulacion/estado`. El verbo HTTP dice la operación; la URL nombra el recurso.
 
-### 2. Ocultamiento e Invariantes
-- **¿Quién sostiene las reglas numéricas del juego?** Las clases del dominio (`Arma`, `Francotirador`, `Pistola`, `Jugador`) en sus constructores, métodos de acción (`disparar`, `recargar`, `recibirDanio`) y validaciones de la capa de servicio (`ArmaService`).
-- **¿Qué prueba de Insomnia muestra que un `POST` ilegal deja la base igual que antes?** La petición `09 - POST Ilegal (Invariante Roto: Daño <= 0)` envía un cuerpo con `"dano": -15`. El constructor y el servicio rechazan la operación arrojando `IllegalArgumentException`, el handler responde `400 Bad Request`, y un `GET /api/armas` posterior demuestra que la colección no creció ni se alteró.
+### 2. Identidad
+La clave es `id` (`Long`) de cada entidad, generada por JPA con `@GeneratedValue(strategy = GenerationType.IDENTITY)`. El JSON de creación la omite: `ArmaRequest` y `JugadorRequest` no tienen campo `id`, así que el cliente no puede elegir la clave ni colisionar con una fila existente.
 
-### 3. PUT vs PATCH
-- **PUT (`PUT /api/armas/{id}`):** Reemplazo semántico completo del recurso. Requiere el objeto íntegro; los campos omitidos son tratados según los valores por defecto o disparan recarga legal.
-- **PATCH (`PATCH /api/armas/{id}`):** Actualización parcial. Acepta un mapa JSON con un subconjunto de claves (ej: sólo `{"precio": 1400, "dano": 29}`) y modifica únicamente esos atributos, preservando intactos el nombre, peso, munición y configuraciones previas.
+### 3. Herencia y tablas
+Elegimos `InheritanceType.SINGLE_TABLE` con la columna discriminadora `tipo_arma`. En **nuestro** dominio las armas comparten casi todos sus atributos (nombre, precio, daño, peso y munición) y las diferencias son pocos campos propios de cada hija (`zoom`, `cargador`, `cartuchos`, etc.). Una sola tabla evita joins para listar armas de distintos subtipos, que es justamente lo que hacen el CRUD y la simulación. Jackson distingue el subtipo con `tipo` en el JSON; `getTipo()` lleva `@JsonIgnore` para no duplicar esa clave.
 
-### 4. DELETE
-- **¿Qué significa borrar en su modelo?** Significa la eliminación física de la fila en la tabla `armas` de la base de datos H2 mediante `armaRepository.delete(arma)`.
-- **¿Ese verbo HTTP habla con un mensaje del dominio?** Sí, primero busca y valida la existencia del recurso con `buscarPorId(id)`, y luego ejecuta el borrado físico respondiendo status 200 con un JSON de confirmación. Consultas posteriores por dicho ID responden inmediatamente `404 Not Found`.
+### 4. Interfaz y repositorio
+`ArmaRepository` y `JugadorRepository` son interfaces: Spring Data genera la implementación y los services las inyectan. Eso permite cambiar la persistencia sin tocar la lógica y probar los services sin SQL. Es la misma idea del protocolo de POO-07: `UICapable` es un contrato entre quien pide el mensaje y quien lo responde; el repositorio es un contrato entre quien pide datos y quien los entrega. El controller ya no habla con repositorios: solo con services.
 
-### 5. Dos Reglas y Simulación Persistida
-- **¿Qué dos hechos del juego cambian el estado de más de un objeto a la vez?** El disparo balístico conjunto de un `Francotirador` y una `Pistola` contra un `Jugador`: gasta 1 bala del rifle, 1 bala de la pistola, y simultáneamente reduce la salud del combatiente en el daño acumulado.
-- **¿Cómo se llama el recurso HTTP de la simulación?** `POST /api/simulacion/combate` (y `GET /api/simulacion/estado`).
-- **¿Un `GET` posterior muestra el resultado ya persistido?** Sí, un `GET /api/armas/3`, `GET /api/armas/4` o `GET /api/jugadores/1` confirma que la munición restante y la salud disminuida están efectivamente guardadas en H2.
+### 5. Protocolo del dominio
+`UICapable` (en `domain`) es la interfaz, con `renderizarUI()` como mensaje de texto y un `default method`. `GET /ui/elementos` y `GET /ui/renderizar` usan referencias `UICapable` sobre un `Francotirador` (familia `Arma`) y un `Jugador` (familia independiente), ambos leídos de H2. Sí puede hablar con instancias de familias distintas.
 
-### 6. Jerarquía de Excepciones del Dominio
-- **¿Cómo se llama cada clase y por qué?**
-  - `DominioCS2Exception`: Clase base no comprobada de la familia de excepciones del juego.
-  - `MunicionAgotadaException`: Hija 1, nombrada por la regla física de disparo fallido cuando el cargador está en 0.
-  - `EconomiaInvalidaException`: Hija 2, nombrada por la regla económica competitiva de CS2 (rango `$0` a `$16,000`).
-- **¿Un recurso inexistente y una regla de juego incumplida son tipos distintos?** Sí. Un recurso inexistente es un problema de direccionamiento HTTP/persistencia (`RecursoNoEncontradoException` -> 404 Not Found), mientras que una regla de juego es una imposibilidad del dominio (`MunicionAgotadaException` -> 409 Conflict, `EconomiaInvalidaException` -> 422 Unprocessable).
-- **¿Qué lleva el JSON de error?** Contiene `timestamp`, `status`, `error`, `tipoExcepcion`, `codigo` legible (ej. `CS2_ARMA_SIN_MUNICION`), campos de contexto (`arma`, `municionActual`, `precioSolicitado`, etc.) y el `mensaje` explicativo.
+### 6. Ocultamiento e invariantes
+Los atributos de las entidades son `private`, los constructores que pide JPA son `protected` y las entradas JSON son DTOs sin lógica. Ninguna entidad valida ni lanza excepciones: las reglas numéricas las sostiene `ArmaService` (precio `0..16000`, daño `1..500`, peso y munición positivos, unicidad de nombre) y `JugadorService` (salud `0..100`, dinero `0..16000`). El pedido `09` envía `dano: -15`, recibe `400` con `CS2_REGLA_NEGOCIO` y un `GET` posterior comprueba que la colección no creció.
 
-### 7. Preguntas de Anclaje de la Cátedra
-- **Si mañana cambiamos H2 por PostgreSQL u Oracle, ¿qué archivos se tocan y cuáles se quedan quietos?**  
-  *Se tocan:* Únicamente `pom.xml` (dependencia del driver JDBC) y `application.properties` (URL JDBC, usuario, clave y dialecto).  
-  *Se quedan quietos:* Absolutamente todas las clases del dominio (`Arma`, `Francotirador`, `Pistola`, `Jugador`), las excepciones, los controladores REST, los servicios (`ArmaService`, `SimulacionService`) y los repositorios (`ArmaRepository`). Esto demuestra el desacoplamiento de Spring Data JPA.
-- **¿Quién lanza la excepción, el controller o el objeto del juego?**  
-  La lanza el **objeto del juego** (métodos del dominio en `Arma` y `Jugador`) o la capa de servicio ante una regla de negocio. El controller jamás inventa validaciones; su rol se limita a recibir la petición, delegar al servicio/dominio y dejar que `@RestControllerAdvice` capture la excepción emitida.
-- **¿Cómo convive el constructor sin argumentos de JPA frente al ocultamiento y los constructores de negocio?**  
-  JPA requiere un constructor por defecto sin argumentos (`public Arma() {}` o `protected`) para instanciar los objetos por reflexión al leer filas de la BD. El ocultamiento se preserva manteniendo constructores sobrecargados de negocio obligatorios para el código cliente, validando invariantes en los setters e impidiendo setters que corrompan el estado operacional.
-- **¿Diferencia entre excepción comprobada (*checked*) y no comprobada (*unchecked*), y por qué usamos no comprobada?**  
-  Las excepciones comprobadas heredan de `Exception` y fuerzan cláusulas `throws` en cada método intermedio acoplando capas. Las excepciones no comprobadas heredan de `RuntimeException`. Usamos **no comprobadas** (`DominioCS2Exception`) porque desacoplan limpiamente el dominio, y permiten que `@Transactional` de Spring ejecute rollback automático sin requerir configuración adicional de `rollbackFor`.
-- **¿Cómo discrimina Jackson el subtipo al crear y al listar?**  
-  Se configuró `@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "tipo", defaultImpl = Arma.class)` y `@JsonSubTypes` en `Arma.java`. Al enviar `{"tipo": "FRANCOTIRADOR", ...}` Jackson instancia automáticamente `Francotirador.class` con su campo `zoom`. Al serializar, Jackson incluye `"tipo": "FRANCOTIRADOR"` o `"tipo": "PISTOLA"`.
+### 7. PUT y PATCH
+`PUT /api/armas/{id}` es reemplazo completo: exige nombre, precio, daño, peso y capacidad de munición; si falta uno, `ArmaService` rechaza la petición. `PATCH /api/armas/{id}` recibe un mapa con un subconjunto de claves y conserva las demás; por ejemplo `{"precio": 2650, "dano": 38}` no toca nombre, peso ni munición. Un PATCH con `{"municionActual": 0}` es válido y deja el arma con el cargador vacío.
+
+### 8. DELETE
+Borrar significa eliminar físicamente la fila de la tabla `armas` en H2. `ArmaService.eliminar` busca el arma con `buscarPorId` (404 si no existe) y llama a `armaRepository.delete`. La respuesta es `200` con un JSON de confirmación; un `GET` posterior por el mismo id responde `404`.
+
+### 9. Dos reglas y simulación persistida
+El disparo combinado de un `Francotirador` y una `Pistola` cambia el estado de tres objetos: cada arma gasta una bala y el `Jugador` recibe el daño total. El recurso es `POST /api/simulacion/combate` y el estado se consulta con `GET /api/simulacion/estado`; además, `GET /api/armas/{id}` y `GET /api/jugadores/{id}` muestran la munición y la salud ya persistidas.
+
+### 10. Excepciones
+`DominioCS2Exception` es la base no comprobada. `MunicionAgotadaException` nombra la regla del cargador vacío (409, `CS2_ARMA_SIN_MUNICION`) y `EconomiaInvalidaException` nombra el tope económico (422, `CS2_ECONOMIA_EXCEDIDA`). `RecursoNoEncontradoException` (404) y `ReglaNegocioException` (400) son tipos distintos de los anteriores. El JSON de error lleva `timestamp`, `status`, `error`, `tipoExcepcion`, `codigo`, datos de contexto y `mensaje`.
+
+### 11. Preguntas de anclaje
+- **Si cambiamos H2 por otra base:** se tocan `pom.xml` (driver) y `application.properties` (URL, credenciales y dialecto). Quedan quietos dominio, services, controllers, excepciones y repositorios: estos últimos son interfaces Spring Data.
+- **¿Quién lanza la excepción?** La capa `service`, que es donde viven las validaciones y las reglas; el controller solo delega y `@RestControllerAdvice` convierte cada tipo en JSON y código HTTP.
+- **¿Constructor vacío frente al ocultamiento?** JPA necesita un constructor sin argumentos; es `protected` en todas las entidades, así que solo lo usa el framework. Las entradas JSON llegan a DTOs y los services construyen las entidades con constructores de negocio.
+- **Checked vs unchecked:** las excepciones de la jerarquía heredan de `RuntimeException` para no acoplar todas las firmas con `throws` y para que `@Transactional` haga rollback automático.
+- **¿Cómo discrimina Jackson el subtipo?** El cliente envía `{"tipo": "FRANCOTIRADOR", ...}` en `ArmaRequest`; `ArmaService` construye la subclase correspondiente. Al serializar, `@JsonTypeInfo` agrega un único `tipo` y `@JsonIgnore` evita la clave duplicada de `getTipo()`.
 
 ---
 
 ## 7. Colección de Insomnia: Cómo Importar y Recorrer
 
-La colección se encuentra versionada en dos rutas estándar del proyecto:
-- `insomnia/insomnia_collection_lp3_poo08.json`
-- `docs/insomnia/insomnia_collection_lp3_poo08.json`
+La colección está versionada en `insomnia/insomnia_collection_lp3_poo08.json` y en `docs/insomnia/insomnia_collection_lp3_poo08.json`.
 
-### Importación en Insomnia:
-1. Abrir **Insomnia REST Client**.
-2. Ir a **Preferences / Settings** o presionar `Ctrl + Shift + I` (**Import/Export**).
-3. Seleccionar **Import Data** -> **From File**.
-4. Elegir el archivo `insomnia/insomnia_collection_lp3_poo08.json`.
-5. Se creará el espacio de trabajo **"LP3 - POO-08 CRUD H2 CS2 API"** con el entorno base `base_url = http://localhost:8080`.
+1. Abrir Insomnia y usar **Import Data → From File**.
+2. Elegir uno de esos archivos.
+3. Se crea el workspace **"LP3 - POO-08 CRUD H2 CS2 API"** con `base_url = http://localhost:8080`.
 
-### Orden Recomendado de Ejecución (Paso a Paso):
-1. **01 - GET / (Servicio Vivo):** Verifica que Spring Boot está corriendo en puerto 8080 (200 OK).
-2. **02 - POST /api/armas (Crear Francotirador):** Registra un "SSG 08 Scout" con `"tipo": "FRANCOTIRADOR"` y `"zoom": 2` (201 Created).
-3. **03 - POST /api/armas (Crear Pistola):** Registra una "USP-S Táctica" con `"tipo": "PISTOLA"` y `"cargador": 12` (201 Created).
-4. **04 - GET /api/armas (Listar Colección):** Comprueba que la colección contiene las armas precargadas y las nuevas creadas con sus subtipos discriminados.
-5. **05 - GET /api/armas/1 (Buscar por ID):** Retorna el arma AK-47 persistida.
-6. **06 - PUT /api/armas/1 (Actualización Completa):** Modifica el arma a "AK-47 Vulcan" (200 OK).
-7. **07 - PATCH /api/armas/1 (Actualización Parcial):** Modifica sólo precio y daño sin tocar el resto.
-8. **08 - DELETE /api/armas/2:** Borra el arma 2 (M4A4) de la base de datos.
-9. **09 - POST Ilegal (Invariante Roto):** Envía daño negativo; responde `400 Bad Request` y la base no se corrompe.
-10. **10 - GET ID Inexistente:** Consulta `/api/armas/999` y recibe `404 Not Found`.
-11. **11 - Excepción Hija 1 (MunicionAgotadaException):** Dispara un arma hasta agotar el cargador; el intento siguiente responde `409 Conflict`.
-12. **12 - Excepción Hija 2 (EconomiaInvalidaException):** Intenta registrar un arma con precio $25,000; responde `422 Unprocessable Entity`.
-13. **13 - GET /ui/elementos:** Prueba el consumo polimórfico de la interfaz `UICapable`.
-14. **15 - POST /api/simulacion/combate:** Ejecuta la simulación balística con las dos reglas del juego.
-15. **16 - GET /api/simulacion/estado:** Verifica que la munición gastada y la salud reducida quedaron persistidas en H2.
+Orden de ejecución (17 pedidos):
+
+1. **01 - GET /**: comprueba que el servicio está vivo.
+2. **02 - POST /api/armas**: crea el `Francotirador` "SSG 08 Scout" (201).
+3. **03 - POST /api/armas**: crea la `Pistola` "USP-S Táctica" (201).
+4. **04 - GET /api/armas**: lista lo persistido con su `tipo`.
+5. **05 - GET /api/armas/1**: busca el arma precargada.
+6. **06 - PUT /api/armas/1**: reemplazo completo ("AK-47 Vulcan").
+7. **07 - PATCH /api/armas/1**: cambia solo precio y daño.
+8. **08 - DELETE /api/armas/2**: borra el arma 2; el `GET` posterior da 404.
+9. **09 - POST Ilegal**: `dano: -15` → 400 `CS2_REGLA_NEGOCIO`; la base no crece.
+10. **10 - GET ID Inexistente**: `/api/armas/999` → 404 `CS2_NOT_FOUND`.
+11. **10b - PATCH /api/armas/1**: deja `municionActual: 0` en un paso.
+12. **11 - Excepción Hija 1**: un único `POST /api/armas/1/disparar` → 409 `CS2_ARMA_SIN_MUNICION`.
+13. **12 - Excepción Hija 2**: precio `25000` → 422 `CS2_ECONOMIA_EXCEDIDA`.
+14. **13 - GET /ui/elementos**: consume `UICapable` con un jugador y un arma leídos de H2.
+15. **14 - GET /ui/renderizar**: renderizado individual por la interfaz; muestra el estado persistido.
+16. **15 - POST /api/simulacion/combate**: ejecuta las dos reglas y persiste munición y salud.
+17. **16 - GET /api/simulacion/estado**: verifica el resultado en H2.
 
 ---
 
@@ -361,11 +339,4 @@ La colección se encuentra versionada en dos rutas estándar del proyecto:
 ./mvnw clean test
 ```
 
-**Resultado:**
-```text
-[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0
-[INFO] BUILD SUCCESS
-```
-- **12 tests** en `ArmaCrudIntegrationTests`: ciclo CRUD completo, rechazo de duplicados, validación económica, persistencia polimórfica, actualización PATCH, disparo y recarga, y simulación de combate persistida en H2.
-- **7 tests** en `DominioPoOTests`: constructores sobrecargados, sobreescritura, sobrecarga de métodos, invariantes e interfaz `UICapable`.
-- **1 test** en `Cs2ApplicationTests`: arranque del contexto de Spring Boot.
+Los 21 tests cubren constructores y sobreescritura, campos privados y constructor JPA protegido, CRUD, validaciones en services, ambos handlers de excepción, la simulación persistida y el endpoint de la interfaz leyendo estado real de H2.

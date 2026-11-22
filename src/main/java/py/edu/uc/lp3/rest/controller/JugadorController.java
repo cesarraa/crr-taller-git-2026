@@ -3,41 +3,35 @@ package py.edu.uc.lp3.rest.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import py.edu.uc.lp3.domain.Jugador;
-import py.edu.uc.lp3.exception.RecursoNoEncontradoException;
-import py.edu.uc.lp3.repository.JugadorRepository;
+import py.edu.uc.lp3.rest.dto.JugadorRequest;
+import py.edu.uc.lp3.service.JugadorService;
 
 import java.net.URI;
 import java.util.List;
 
-/**
- * Controlador REST para la consulta y registro de Jugadores persistidos en H2.
- */
 @RestController
 @RequestMapping("/api/jugadores")
 public class JugadorController {
 
-    private final JugadorRepository jugadorRepository;
+    private final JugadorService jugadorService;
 
-    public JugadorController(JugadorRepository jugadorRepository) {
-        this.jugadorRepository = jugadorRepository;
+    public JugadorController(JugadorService jugadorService) {
+        this.jugadorService = jugadorService;
     }
 
     @GetMapping
     public ResponseEntity<List<Jugador>> listarJugadores() {
-        return ResponseEntity.ok(jugadorRepository.findAll());
+        return ResponseEntity.ok(jugadorService.listarTodas());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Jugador> obtenerJugadorPorId(@PathVariable Long id) {
-        Jugador jugador = jugadorRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró el jugador con ID: " + id));
-        return ResponseEntity.ok(jugador);
+        return ResponseEntity.ok(jugadorService.buscarPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<Jugador> crearJugador(@RequestBody Jugador jugador) {
-        jugador.setId(null);
-        Jugador guardado = jugadorRepository.save(jugador);
+    public ResponseEntity<Jugador> crearJugador(@RequestBody JugadorRequest jugador) {
+        Jugador guardado = jugadorService.crear(jugador);
         return ResponseEntity.created(URI.create("/api/jugadores/" + guardado.getId())).body(guardado);
     }
 }

@@ -24,7 +24,9 @@
         "base_url": "http://localhost:8080"
       },
       "dataPropertyOrder": {
-        "&": ["base_url"]
+        "&": [
+          "base_url"
+        ]
       },
       "color": null,
       "isPrivate": false,
@@ -259,13 +261,37 @@
       "_type": "request"
     },
     {
+      "_id": "req_10b_preparar_municion",
+      "parentId": "fld_03_errores",
+      "modified": 1698500000000,
+      "created": 1698500000000,
+      "url": "{{ _.base_url }}/api/armas/1",
+      "name": "10b - PATCH /api/armas/1 (Preparar cargador en 0)",
+      "description": "Deja el cargador del arma 1 en 0 mediante una actualización parcial válida, para provocar el error de munición en un solo paso.",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"municionActual\": 0\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -5,
+      "_type": "request"
+    },
+    {
       "_id": "req_11_hija1_municion",
       "parentId": "fld_03_errores",
       "modified": 1698500000000,
       "created": 1698500000000,
       "url": "{{ _.base_url }}/api/armas/1/disparar",
       "name": "11 - Excepción Hija 1: MunicionAgotadaException (409 Conflict)",
-      "description": "Al disparar un arma que ya no tiene cartuchos, el dominio lanza MunicionAgotadaException. El handler HTTP responde 409 CONFLICT indicando el percutor vacío.",
+      "description": "Con el cargador del arma 1 dejado en 0 por el pedido 10b, un único disparo lanza MunicionAgotadaException. El handler responde 409 CONFLICT indicando el percutor vacío.",
       "method": "POST",
       "body": {},
       "parameters": [],

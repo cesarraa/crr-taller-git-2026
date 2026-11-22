@@ -3,9 +3,6 @@ package py.edu.uc.lp3.domain;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-/**
- * Representa un arma de tipo escopeta en Counter-Strike 2. Hereda de Arma.
- */
 @Entity
 @DiscriminatorValue("ESCOPETA")
 public class Escopeta extends Arma {
@@ -13,35 +10,24 @@ public class Escopeta extends Arma {
     private int cartuchos;
     private float dispersion;
 
+    protected Escopeta() {
+        this("Nova", 1050f, 60, 3.5f, 32, 8, 18.0f);
+    }
+
     public Escopeta(String nombre, float precio, int dano, float peso, int municionMax,
                     int cartuchos, float dispersion) {
         super(nombre, precio, dano, peso, municionMax);
-        if (cartuchos <= 0) {
-            throw new IllegalArgumentException("La cantidad de cartuchos debe ser mayor a cero.");
-        }
-        if (dispersion <= 0) {
-            throw new IllegalArgumentException("La dispersión debe ser mayor a cero.");
-        }
         this.cartuchos = cartuchos;
         this.dispersion = dispersion;
     }
 
     public Escopeta(String nombre, float precio, int dano, int cartuchos) {
-        super(nombre, precio, dano, 3.8f, 32);
-        if (cartuchos <= 0) {
-            throw new IllegalArgumentException("La cantidad de cartuchos debe ser mayor a cero.");
-        }
-        this.cartuchos = cartuchos;
-        this.dispersion = 18.5f;
-    }
-
-    public Escopeta() {
-        this("Nova", 1050f, 60, 3.5f, 32, 8, 18.0f);
+        this(nombre, precio, dano, 3.8f, 32, cartuchos, 18.5f);
     }
 
     @Override
     public String describirComportamiento() {
-        return "Escopeta " + nombre + ": disparo múltiple de perdigones a quemarropa con dispersión de "
+        return "Escopeta " + getNombre() + ": disparo múltiple de perdigones a quemarropa con dispersión de "
                 + dispersion + "% y recarga individual de " + cartuchos + " cartuchos.";
     }
 
@@ -50,9 +36,6 @@ public class Escopeta extends Arma {
     }
 
     public void setCartuchos(int cartuchos) {
-        if (cartuchos <= 0) {
-            throw new IllegalArgumentException("La cantidad de cartuchos debe ser mayor a cero.");
-        }
         this.cartuchos = cartuchos;
     }
 
@@ -61,9 +44,6 @@ public class Escopeta extends Arma {
     }
 
     public void setDispersion(float dispersion) {
-        if (dispersion <= 0) {
-            throw new IllegalArgumentException("La dispersión debe ser mayor a cero.");
-        }
         this.dispersion = dispersion;
     }
 }
