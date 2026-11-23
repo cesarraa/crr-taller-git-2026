@@ -17,11 +17,12 @@ public class ClienteA2 extends ClienteExterno {
 
     @Override
     public ValidacionExterna validar(Map<String, Object> payload) {
-        Map<String, Object> query = new LinkedHashMap<>();
-        query.put("rifleId", propiedades.getRifleId());
-        query.put("jugadorId", propiedades.getJugadorId());
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("municionActual", propiedades.getMunicionActual());
+        body.put("danoBase", propiedades.getDanoBase());
+        body.put("precision", propiedades.getPrecision());
         Object distancia = payload.get("distancia");
-        query.put("distancia", distancia == null ? propiedades.getDistancia() : distancia);
-        return validarConQuery(query);
+        body.put("distancia", distancia == null ? propiedades.getDistancia() : distancia);
+        return super.validar(body);
     }
 }

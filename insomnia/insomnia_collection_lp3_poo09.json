@@ -10,7 +10,7 @@
       "modified": 1698510000000,
       "created": 1698510000000,
       "name": "LP3 - POO-09 APIs cruzadas CS2",
-      "description": "POO-09: A1 César en 8082 (economía), A2 Giovanni en 8081 (munición: rifle 108 / jugador 100), A3 Luis en 8080 (munición y granada). Incluye OpenAPI, datos locales, escenario feliz, un rechazo por compañero y respuestas de ejemplo guardadas.",
+      "description": "POO-09: A1 César en 8082 (economía), A2 Giovanni en 8081 (regla stateless de munición), A3 Luis en 8080 (regla stateless de munición y granada). Incluye OpenAPI, datos locales, escenario feliz, un rechazo por compañero y respuestas de ejemplo guardadas.",
       "scope": "collection",
       "_type": "workspace"
     },
@@ -77,7 +77,7 @@
       "created": 1698510000000,
       "url": "{{ _.a2_openapi_url }}",
       "name": "02 - GET OpenAPI de A2",
-      "description": "OpenAPI de Giovanni (A2) en 8081. Su regla es POST /api/simulacion/disparar?rifleId=108&jugadorId=100&distancia=35: 200 con mensaje/daño o 409 si no quedan balas.",
+      "description": "OpenAPI de Giovanni (A2) en 8081. Su regla es POST /api/reglas/disparo con JSON {municionActual:29,danoBase:36,precision:0.85,distancia:35}: 200 con aceptada:true o 400 con aceptada:false.",
       "method": "GET",
       "body": {},
       "parameters": [],
@@ -93,7 +93,7 @@
       "created": 1698510000000,
       "url": "{{ _.a3_openapi_url }}",
       "name": "03 - GET OpenAPI de A3",
-      "description": "OpenAPI de Luis (A3) en 8080. Su regla es POST /simulaciones/combate?armaDeFuegoId={id}&granadaId={id}: 200 con daño/balas/granada o 409 si la granada ya fue lanzada.",
+      "description": "OpenAPI de Luis (A3) en 8080. Su regla es POST /api/reglas/combate con JSON {tieneBalas:true,granadaLanzada:false}: 200 con aceptada:true o aceptada:false.",
       "method": "GET",
       "body": {},
       "parameters": [],
@@ -199,7 +199,7 @@
       "created": 1698510000000,
       "url": "{{ _.a1_base_url }}/api/escenarios",
       "name": "07 - POST /api/escenarios (rechazo de A2)",
-      "description": "En Giovanni crear el rifle {tipo:rifle,nombre:AK-47 VACIO CESAR,precio:2700,dano:36,cargador:1}, disparar una vez con ese id y repetir. A2 responde 409 y A1 debe devolver 422 CS2_VALIDACION_A2_RECHAZADA con statusExterno 409; la base no debe crecer.",
+      "description": "Iniciar A1 con A2_MUNICION_ACTUAL=0. A2 responde 400 con aceptada:false y A1 debe devolver 422 CS2_VALIDACION_A2_RECHAZADA con statusExterno 400; la base no debe crecer.",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
@@ -223,7 +223,7 @@
       "created": 1698510000000,
       "url": "{{ _.a1_base_url }}/api/escenarios",
       "name": "08 - POST /api/escenarios (rechazo de A3)",
-      "description": "Primero correr el pedido 06 una vez: eso consume la granada 2 en el H2 de Luis. Repetir este pedido para que A3 responda 409 y A1 devuelva 422 CS2_VALIDACION_A3_RECHAZADA con statusExterno 409; la base no debe crecer.",
+      "description": "Iniciar A1 con A3_TIENE_BALAS=false (o A3_GRANADA_LANZADA=true). A3 responde 200 con aceptada:false y A1 devuelve 422 CS2_VALIDACION_A3_RECHAZADA con statusExterno 200; la base no debe crecer.",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
@@ -285,7 +285,7 @@
           "value": "application/json"
         }
       ],
-      "body": "{\n  \"id\": 1,\n  \"nombreEscenario\": \"Emboscada en Mirage\",\n  \"descripcion\": \"AWP desde ventana con validación de A2 y A3\",\n  \"armaNombre\": \"AWP\",\n  \"jugadorAlias\": \"feliz\",\n  \"distancia\": 35,\n  \"headshot\": false,\n  \"resultadoA2\": \"AK-47 ROUND ROBIN dispara a 35 m y causa 20 de daño.\",\n  \"resultadoA3\": \"daño 19, balas restantes 11, granada lanzada true\",\n  \"registradoEn\": \"2026-11-23T03:44:12.123456\"\n}",
+      "body": "{\n  \"id\": 1,\n  \"nombreEscenario\": \"Emboscada en Mirage\",\n  \"descripcion\": \"AWP desde ventana con validación de A2 y A3\",\n  \"armaNombre\": \"AWP\",\n  \"jugadorAlias\": \"feliz\",\n  \"distancia\": 35,\n  \"headshot\": false,\n  \"resultadoA2\": \"La regla acepta el disparo.\",\n  \"resultadoA3\": \"La regla acepta el disparo y el lanzamiento.\",\n  \"registradoEn\": \"2026-11-23T03:44:12.123456\"\n}",
       "encoding": "utf-8",
       "_type": "response"
     },
@@ -294,7 +294,7 @@
       "parentId": "req_poo09_07_rechazo_a2",
       "modified": 1698510000000,
       "created": 1698510000000,
-      "name": "422 - Rechazo de Giovanni (A2)",
+      "name": "422 - Rechazo de Giovanni (A2, sin munición)",
       "status": 422,
       "headers": [
         {
@@ -302,7 +302,7 @@
           "value": "application/json"
         }
       ],
-      "body": "{\n  \"timestamp\": \"2026-11-23T03:44:12.401750028\",\n  \"status\": 422,\n  \"error\": \"Validación externa rechazada\",\n  \"tipoExcepcion\": \"ValidacionExternaRechazadaException\",\n  \"codigo\": \"CS2_VALIDACION_A2_RECHAZADA\",\n  \"origen\": \"A2\",\n  \"statusExterno\": 409,\n  \"cuerpoExterno\": \"{\\\"error\\\":\\\"No queda munición en AK-47 VACIO CESAR\\\"}\",\n  \"mensaje\": \"La validación externa A2 rechazó el escenario con estado 409\"\n}",
+      "body": "{\n  \"timestamp\": \"2026-11-23T03:44:12.401750028\",\n  \"status\": 422,\n  \"error\": \"Validación externa rechazada\",\n  \"tipoExcepcion\": \"ValidacionExternaRechazadaException\",\n  \"codigo\": \"CS2_VALIDACION_A2_RECHAZADA\",\n  \"origen\": \"A2\",\n  \"statusExterno\": 400,\n  \"cuerpoExterno\": \"{\\\"aceptada\\\":false,\\\"regla\\\":\\\"DISPARO\\\",\\\"mensaje\\\":\\\"El rifle no tiene munición.\\\",\\\"danoEfectivo\\\":null}\",\n  \"mensaje\": \"La validación externa A2 rechazó el escenario con estado 400\"\n}",
       "encoding": "utf-8",
       "_type": "response"
     },
@@ -311,7 +311,7 @@
       "parentId": "req_poo09_08_rechazo_a3",
       "modified": 1698510000000,
       "created": 1698510000000,
-      "name": "422 - Rechazo de Luis (A3), granada ya lanzada",
+      "name": "422 - Rechazo de Luis (A3, sin balas)",
       "status": 422,
       "headers": [
         {
@@ -319,7 +319,7 @@
           "value": "application/json"
         }
       ],
-      "body": "{\n  \"timestamp\": \"2026-11-23T03:44:12.401750028\",\n  \"status\": 422,\n  \"error\": \"Validación externa rechazada\",\n  \"tipoExcepcion\": \"ValidacionExternaRechazadaException\",\n  \"codigo\": \"CS2_VALIDACION_A3_RECHAZADA\",\n  \"origen\": \"A3\",\n  \"statusExterno\": 409,\n  \"cuerpoExterno\": \"{\\\"error\\\":\\\"La granada con id 2 ya fue lanzada\\\"}\",\n  \"mensaje\": \"La validación externa A3 rechazó el escenario con estado 409\"\n}",
+      "body": "{\n  \"timestamp\": \"2026-11-23T03:44:12.401750028\",\n  \"status\": 422,\n  \"error\": \"Validación externa rechazada\",\n  \"tipoExcepcion\": \"ValidacionExternaRechazadaException\",\n  \"codigo\": \"CS2_VALIDACION_A3_RECHAZADA\",\n  \"origen\": \"A3\",\n  \"statusExterno\": 200,\n  \"cuerpoExterno\": \"{\\\"aceptada\\\":false,\\\"mensaje\\\":\\\"El arma no tiene balas en el cargador.\\\"}\",\n  \"mensaje\": \"La validación externa A3 rechazó el escenario con estado 200\"\n}",
       "encoding": "utf-8",
       "_type": "response"
     }

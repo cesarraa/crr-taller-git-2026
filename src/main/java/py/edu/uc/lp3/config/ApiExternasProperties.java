@@ -29,11 +29,12 @@ public class ApiExternasProperties {
         private String baseUrl;
         private String openApiUrl;
         private String validacionPath;
-        private Long rifleId = 108L;
-        private Long jugadorId = 100L;
+        private Integer municionActual = 29;
+        private Integer danoBase = 36;
+        private Double precision = 0.85;
         private Integer distancia = 35;
-        private Long armaDeFuegoId = 1L;
-        private Long granadaId = 2L;
+        private Boolean tieneBalas = true;
+        private Boolean granadaLanzada = false;
         private long connectTimeoutMs = 2000;
         private long readTimeoutMs = 3000;
 
@@ -77,20 +78,28 @@ public class ApiExternasProperties {
             this.validacionPath = validacionPath;
         }
 
-        public Long getRifleId() {
-            return rifleId;
+        public Integer getMunicionActual() {
+            return municionActual;
         }
 
-        public void setRifleId(Long rifleId) {
-            this.rifleId = rifleId;
+        public void setMunicionActual(Integer municionActual) {
+            this.municionActual = municionActual;
         }
 
-        public Long getJugadorId() {
-            return jugadorId;
+        public Integer getDanoBase() {
+            return danoBase;
         }
 
-        public void setJugadorId(Long jugadorId) {
-            this.jugadorId = jugadorId;
+        public void setDanoBase(Integer danoBase) {
+            this.danoBase = danoBase;
+        }
+
+        public Double getPrecision() {
+            return precision;
+        }
+
+        public void setPrecision(Double precision) {
+            this.precision = precision;
         }
 
         public Integer getDistancia() {
@@ -101,20 +110,20 @@ public class ApiExternasProperties {
             this.distancia = distancia;
         }
 
-        public Long getArmaDeFuegoId() {
-            return armaDeFuegoId;
+        public Boolean getTieneBalas() {
+            return tieneBalas;
         }
 
-        public void setArmaDeFuegoId(Long armaDeFuegoId) {
-            this.armaDeFuegoId = armaDeFuegoId;
+        public void setTieneBalas(Boolean tieneBalas) {
+            this.tieneBalas = tieneBalas;
         }
 
-        public Long getGranadaId() {
-            return granadaId;
+        public Boolean getGranadaLanzada() {
+            return granadaLanzada;
         }
 
-        public void setGranadaId(Long granadaId) {
-            this.granadaId = granadaId;
+        public void setGranadaLanzada(Boolean granadaLanzada) {
+            this.granadaLanzada = granadaLanzada;
         }
     }
 }

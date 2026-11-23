@@ -17,17 +17,9 @@ public class ClienteA3 extends ClienteExterno {
 
     @Override
     public ValidacionExterna validar(Map<String, Object> payload) {
-        Map<String, Object> query = new LinkedHashMap<>();
-        query.put("armaDeFuegoId", propiedades.getArmaDeFuegoId());
-        query.put("granadaId", propiedades.getGranadaId());
-
-        ValidacionExterna respuesta = validarConQuery(query);
-        if (respuesta.getMensaje() == null && respuesta.getDanioInfligido() != null) {
-            respuesta.setMensaje(String.format("daño %d, balas restantes %d, granada lanzada %s",
-                    respuesta.getDanioInfligido(),
-                    respuesta.getBalasRestantes(),
-                    Boolean.TRUE.equals(respuesta.getGranadaLanzada())));
-        }
-        return respuesta;
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("tieneBalas", propiedades.getTieneBalas());
+        body.put("granadaLanzada", propiedades.getGranadaLanzada());
+        return super.validar(body);
     }
 }

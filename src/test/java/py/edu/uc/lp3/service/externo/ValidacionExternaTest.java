@@ -12,27 +12,35 @@ class ValidacionExternaTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void respuestaAceptadaDeLuisNoTraeBanderaPeroSeAcepta() throws Exception {
-        String json = "{\"danioInfligido\":19,\"balasRestantes\":11,\"granadaLanzada\":true}";
+    void respuestaAceptadaDeLuisCombateSeAceptaPorAliasAceptada() throws Exception {
+        String json = "{\"aceptada\":true,\"mensaje\":\"La regla acepta el disparo y el lanzamiento.\"," +
+                "\"danioEfectivo\":11,\"balasTransferidas\":null}";
 
         ValidacionExterna respuesta = objectMapper.readValue(json, ValidacionExterna.class);
 
         assertTrue(respuesta.isAprobado());
-        assertEquals(19, respuesta.getDanioInfligido());
-        assertEquals(11, respuesta.getBalasRestantes());
-        assertTrue(respuesta.getGranadaLanzada());
+        assertEquals("La regla acepta el disparo y el lanzamiento.", respuesta.getMensaje());
     }
 
     @Test
-    void respuestaAceptadaDeGiovanniConservaElMensaje() throws Exception {
-        String json = "{\"mensaje\":\"AK-47 ROUND ROBIN dispara a 35 m y causa 20 de daño.\"," +
-                "\"rifleId\":108,\"municionRestante\":28,\"jugadorId\":100," +
-                "\"danoRecibido\":20,\"vidaRestante\":60}";
+    void respuestaAceptadaDeGiovanniDisparoSeAceptaPorAliasAceptada() throws Exception {
+        String json = "{\"aceptada\":true,\"regla\":\"DISPARO\"," +
+                "\"mensaje\":\"La regla acepta el disparo.\",\"danoEfectivo\":15}";
 
         ValidacionExterna respuesta = objectMapper.readValue(json, ValidacionExterna.class);
 
         assertTrue(respuesta.isAprobado());
-        assertEquals("AK-47 ROUND ROBIN dispara a 35 m y causa 20 de daño.", respuesta.getMensaje());
+        assertEquals("La regla acepta el disparo.", respuesta.getMensaje());
+    }
+
+    @Test
+    void aceptadaFalsoEsRechazoConMensaje() throws Exception {
+        String json = "{\"aceptada\":false,\"mensaje\":\"El arma no tiene balas en el cargador.\"}";
+
+        ValidacionExterna respuesta = objectMapper.readValue(json, ValidacionExterna.class);
+
+        assertFalse(respuesta.isAprobado());
+        assertEquals("El arma no tiene balas en el cargador.", respuesta.getMensaje());
     }
 
     @Test

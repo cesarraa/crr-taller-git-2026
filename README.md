@@ -375,8 +375,8 @@ El documento describe el CRUD de armas y jugadores, la simulación con sus dos r
 | Rol | Alumno | Base URL | OpenAPI | Regla publicada en una frase |
 |---|---|---|---|---|
 | A1 | César Ramírez (este repo) | `http://localhost:8082` | `http://localhost:8082/v3/api-docs` | El precio del arma debe estar entre $0 y $16.000; ruta real `POST /api/armas` |
-| A2 | Giovanni Monteggia | `http://localhost:8081` | `http://localhost:8081/v3/api-docs` | Munición: un rifle necesita balas para disparar; `POST /api/simulacion/disparar?rifleId={id}&jugadorId={id}&distancia={valor}` responde 409 si no quedan balas |
-| A3 | Luis Tauber | `http://localhost:8080` | `http://localhost:8080/v3/api-docs` | Un arma de fuego necesita munición para disparar y una granada no se puede lanzar dos veces; `POST /simulaciones/combate?armaDeFuegoId={id}&granadaId={id}` |
+| A2 | Giovanni Monteggia | `http://localhost:8081` | `http://localhost:8081/v3/api-docs` | Munición stateless: `POST /api/reglas/disparo` con `{"municionActual":29,"danoBase":36,"precision":0.85,"distancia":35}`; 200 con `aceptada:true` o 400 con `aceptada:false` |
+| A3 | Luis Tauber | `http://localhost:8080` | `http://localhost:8080/v3/api-docs` | Munición y granada stateless: `POST /api/reglas/combate` con `{"tieneBalas":true,"granadaLanzada":false}`; 200 con `aceptada:true` o `aceptada:false` |
 
 ### Cómo levantar los tres servicios juntos
 
@@ -393,7 +393,7 @@ cd SMONTEGGIA-taller-git-2026 && ./mvnw spring-boot:run
 cd crr-taller-git-2026 && ./mvnw spring-boot:run
 ```
 
-Giovanni siembra al arrancar el rifle `108` y el jugador `100` (se configuran con `A2_RIFLE_ID` / `A2_JUGADOR_ID`). En el H2 de Luis hay que crear un `armaDeFuego` y una `granada` con `POST /armas`; sus IDs se pasan por `A3_ARMA_DE_FUEGO_ID` / `A3_GRANADA_ID` (defaults `1` y `2`). Con `distancia=35`, Giovanni devuelve 20 de daño: `{"mensaje":"AK-47 ROUND ROBIN dispara a 35 m y causa 20 de daño.","rifleId":108,"municionRestante":28,"jugadorId":100,"danoRecibido":20,"vidaRestante":60}`.
+Los endpoints son stateless: no dependen de IDs sembrados ni de reinicios del H2 ajeno. Giovanni responde 200 con `{"aceptada":true,"regla":"DISPARO","mensaje":"La regla acepta el disparo.","danoEfectivo":15}` o 400 con `{"aceptada":false,"regla":"DISPARO","mensaje":"El rifle no tiene munición.","danoEfectivo":null}`. Luis responde 200 con `{"aceptada":true,"mensaje":"La regla acepta el disparo y el lanzamiento.","danioEfectivo":11,"balasTransferidas":null}` o 200 con `{"aceptada":false,"mensaje":"El arma no tiene balas en el cargador."}`.
 
 ### Endpoint de escenario
 
@@ -413,7 +413,7 @@ Content-Type: application/json
 
 `EscenarioService` valida los datos locales, llama a A2 y luego a A3, y recién guarda en H2 si **ambos** aceptan. `GET /api/escenarios` y `GET /api/escenarios/{id}` leen lo persistido. Si un compañero rechaza, la base queda igual y la respuesta 422 informa `origen`, `statusExterno` y `cuerpoExterno`; tampoco se llama al segundo compañero si el primero rechaza.
 
-A2 y A3 se llaman con `POST` sin cuerpo y query params. Un 200 sin campo `aprobado` cuenta como aceptación: Giovanni devuelve `mensaje`, `danoRecibido`, etc.; Luis devuelve `danioInfligido`, `balasRestantes`, `granadaLanzada`. Un 409 ajeno se convierte en `422 CS2_VALIDACION_<A2|A3>_RECHAZADA` con `statusExterno = 409` y el cuerpo exacto del compañero (`{"error":"No queda munición en AK-47 VACIO CESAR"}` o `{"error":"La granada con id 2 ya fue lanzada"}`).
+A2 y A3 se llaman con `POST` y cuerpo JSON. Un 200 con `aceptada:false` (o `aprobado:false`) cuenta como rechazo y se convierte en `422 CS2_VALIDACION_<A2|A3>_RECHAZADA` con `statusExterno = 200`. Un 400/409 ajeno se convierte en el mismo 422 con el status real y el cuerpo exacto del compañero (`{"aceptada":false,"regla":"DISPARO","mensaje":"El rifle no tiene munición.","danoEfectivo":null}` o `{"aceptada":false,"mensaje":"El arma no tiene balas en el cargador."}`).
 
 ### Configuración de los clientes
 
@@ -423,17 +423,17 @@ Las URLs y los paths se leen de `application.properties` y se pueden sobrescribi
 |---|---|---|
 | `A2_BASE_URL` / `A3_BASE_URL` | `http://localhost:8081` / `http://localhost:8080` | Base de cada compañero |
 | `A2_OPENAPI_URL` / `A3_OPENAPI_URL` | `/v3/api-docs` de cada puerto | Documento ajeno consultado |
-| `A2_VALIDACION_PATH` | `/api/simulacion/disparar` | Ruta confirmada por Giovanni |
-| `A3_VALIDACION_PATH` | `/simulaciones/combate` | Ruta confirmada por Luis |
-| `A2_RIFLE_ID` / `A2_JUGADOR_ID` | `108` / `100` | IDs sembrados por Giovanni en su H2 |
+| `A2_VALIDACION_PATH` | `/api/reglas/disparo` | Regla stateless de Giovanni |
+| `A3_VALIDACION_PATH` | `/api/reglas/combate` | Regla stateless de Luis |
+| `A2_MUNICION_ACTUAL` / `A2_DANO_BASE` / `A2_PRECISION` | `29` / `36` / `0.85` | Datos del disparo para Giovanni |
 | `A2_DISTANCIA` | `35` | Distancia del disparo si el request local no trae una |
-| `A3_ARMA_DE_FUEGO_ID` / `A3_GRANADA_ID` | `1` / `2` | IDs existentes en el H2 de Luis |
+| `A3_TIENE_BALAS` / `A3_GRANADA_LANZADA` | `true` / `false` | Estado de munición y granada para Luis |
 | `A2_CONNECT_TIMEOUT_MS` / `A3_CONNECT_TIMEOUT_MS` | `2000` | Timeout de conexión |
 | `A2_READ_TIMEOUT_MS` / `A3_READ_TIMEOUT_MS` | `3000` | Timeout de lectura |
 
 ### Colección Insomnia base
 
-`insomnia/insomnia_collection_lp3_poo09.json` trae 10 pedidos y 3 respuestas de ejemplo: los tres OpenAPI, la creación del arma y el jugador locales, el escenario feliz, un rechazo de A2 (rifle `AK-47 VACIO CESAR` sin balas), uno de A3 (granada ya lanzada) y los dos `GET` de persistencia. El entorno define `a1_base_url` (8082), `a2_base_url` (8081), `a3_base_url` (8080), las tres URLs de OpenAPI y `escenario_id`.
+`insomnia/insomnia_collection_lp3_poo09.json` trae 10 pedidos y 3 respuestas de ejemplo: los tres OpenAPI, la creación del arma y el jugador locales, el escenario feliz, un rechazo de A2 (sin munición, 400), uno de A3 (`aceptada:false`, 200) y los dos `GET` de persistencia. El entorno define `a1_base_url` (8082), `a2_base_url` (8081), `a3_base_url` (8080), las tres URLs de OpenAPI y `escenario_id`.
 
 ### Entrega
 

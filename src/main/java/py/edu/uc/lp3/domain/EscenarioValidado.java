@@ -37,10 +37,10 @@ public class EscenarioValidado {
     @Schema(description = "Indica si el disparo fue a la cabeza", example = "false")
     private Boolean headshot;
 
-    @Schema(description = "Respuesta de la validación de munición de Giovanni (A2)", example = "A2: munición permitida")
+    @Schema(description = "Respuesta de la validación de munición de Giovanni (A2)", example = "La regla acepta el disparo.")
     private String resultadoA2;
 
-    @Schema(description = "Respuesta de la validación de munición y granada de Luis (A3)", example = "daño 19, balas restantes 11, granada lanzada true")
+    @Schema(description = "Respuesta de la validación de munición y granada de Luis (A3)", example = "La regla acepta el disparo y el lanzamiento.")
     private String resultadoA3;
 
     @Schema(description = "Fecha y hora en que ambas validaciones aceptaron y se guardó la jugada")

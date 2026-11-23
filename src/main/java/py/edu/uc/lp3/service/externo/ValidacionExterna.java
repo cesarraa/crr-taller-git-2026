@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ValidacionExterna {
 
-    @JsonAlias({"approved", "valido", "valida"})
+    @JsonAlias({"aceptada", "approved", "valido", "valida"})
     private Boolean aprobado;
 
     private String mensaje;
