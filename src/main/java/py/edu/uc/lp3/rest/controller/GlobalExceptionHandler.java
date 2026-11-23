@@ -103,6 +103,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler(ValidacionExternaRechazadaException.class)
+    public ResponseEntity<Map<String, Object>> manejarValidacionExternaRechazada(ValidacionExternaRechazadaException ex) {
+        Map<String, Object> error = new LinkedHashMap<>();
+        error.put("timestamp", LocalDateTime.now().toString());
+        error.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        error.put("error", "Validación externa rechazada");
+        error.put("tipoExcepcion", ex.getClass().getSimpleName());
+        error.put("codigo", "CS2_VALIDACION_" + ex.getOrigen() + "_RECHAZADA");
+        error.put("origen", ex.getOrigen());
+        error.put("statusExterno", ex.getStatusExterno());
+        error.put("cuerpoExterno", ex.getCuerpoExterno());
+        error.put("mensaje", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
+    }
+
     /**
      * Handler fallback para la clase base de la jerarquía de excepciones del dominio.
      */

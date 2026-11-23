@@ -74,7 +74,10 @@ Una vez iniciado, el servicio queda disponible en:
 src/main/java/py/edu/uc/lp3/
 ├── Cs2Application.java                     # Arranque de Spring Boot (@SpringBootApplication)
 ├── config/
-│   └── DataInitializer.java               # Carga inicial de armas y jugadores en H2
+│   ├── DataInitializer.java               # Carga inicial de armas y jugadores en H2
+│   ├── OpenApiConfig.java                 # Documentación OpenAPI del servicio propio
+│   ├── ApiExternasProperties.java         # URLs, paths y timeouts de A2 y A3
+│   └── ApiClientConfig.java               # RestClient de A2 y A3 con timeouts
 ├── domain/                                 # Entidades: solo estado, sin reglas ni excepciones
 │   ├── Arma.java                           # Entidad base abstracta (@Entity, SINGLE_TABLE, Jackson)
 │   ├── Fusil.java                          # Hija concreta; AK-47 y M4A4
@@ -88,21 +91,30 @@ src/main/java/py/edu/uc/lp3/
 │   ├── GranadaIncendiaria.java             # Hija de Granada
 │   ├── GranadaTipo.java                    # Enum de tipos de granada
 │   ├── Jugador.java                        # Entidad independiente e implementa UICapable
-│   └── UICapable.java                      # Interfaz de dominio con default method (POO-07)
+│   ├── UICapable.java                      # Interfaz de dominio con default method (POO-07)
+│   └── EscenarioValidado.java              # Jugada guardada tras la aprobación de A2 y A3
 ├── exception/                              # Jerarquía de excepciones lanzadas por los services
 │   ├── DominioCS2Exception.java            # Base unchecked
 │   ├── MunicionAgotadaException.java       # Hija 1 -> 409 Conflict
 │   ├── EconomiaInvalidaException.java      # Hija 2 -> 422 Unprocessable Entity
 │   ├── RecursoNoEncontradoException.java   # 404 Not Found
-│   └── ReglaNegocioException.java          # 400 Bad Request
+│   ├── ReglaNegocioException.java          # 400 Bad Request
+│   └── ValidacionExternaRechazadaException # 422, con origen, status y cuerpo ajeno
 ├── repository/                             # Interfaces Spring Data JPA
 │   ├── ArmaRepository.java                 # JpaRepository<Arma, Long> con consultas derivadas
-│   └── JugadorRepository.java              # JpaRepository<Jugador, Long>
+│   ├── JugadorRepository.java              # JpaRepository<Jugador, Long>
+│   └── EscenarioValidadoRepository.java    # JpaRepository<EscenarioValidado, Long>
 ├── service/                                # Validaciones, reglas del juego y transacciones
 │   ├── ArmaService.java                    # CRUD, balística, munición y construcción de subtipos
 │   ├── JugadorService.java                 # CRUD y validación de combatientes
 │   ├── SimulacionService.java              # Orquesta la simulación persistida de las 2 reglas
-│   └── ResultadoSimulacion.java            # DTO del resultado de la simulación
+│   ├── EscenarioService.java               # Orquesta A2 y A3 y guarda solo si ambos aceptan
+│   ├── ResultadoSimulacion.java            # DTO del resultado de la simulación
+│   └── externo/
+│       ├── ClienteExterno.java             # POST configurado, errores y timeouts
+│       ├── ClienteA2.java                  # Cliente del compañero A2
+│       ├── ClienteA3.java                  # Cliente del compañero A3
+│       └── ValidacionExterna.java          # Respuesta aprobado / mensaje / código
 └── rest/
     ├── controller/
     │   ├── IndexController.java            # GET /
@@ -111,10 +123,12 @@ src/main/java/py/edu/uc/lp3/
     │   ├── JugadorController.java          # Endpoints en /api/jugadores
     │   ├── SimulacionController.java       # /api/simulacion/combate y /estado
     │   ├── UIController.java               # /ui/elementos y /ui/renderizar
+    │   ├── EscenarioController.java        # POST y GET /api/escenarios
     │   └── GlobalExceptionHandler.java     # Handler dedicado por tipo de excepción
     └── dto/
         ├── ArmaRequest.java                # Entrada JSON del arma (sin lógica)
-        └── JugadorRequest.java             # Entrada JSON del jugador (sin lógica)
+        ├── JugadorRequest.java             # Entrada JSON del jugador (sin lógica)
+        └── EscenarioRequest.java           # Entrada JSON del escenario cruzado
 ```
 
 ---
@@ -339,4 +353,89 @@ Orden de ejecución (17 pedidos):
 ./mvnw clean test
 ```
 
-Los 21 tests cubren constructores y sobreescritura, campos privados y constructor JPA protegido, CRUD, validaciones en services, ambos handlers de excepción, la simulación persistida y el endpoint de la interfaz leyendo estado real de H2.
+Los 29 tests cubren constructores y sobreescritura, campos privados y constructor JPA protegido, CRUD, validaciones en services, ambos handlers de excepción, la simulación persistida, el endpoint de la interfaz leyendo estado real de H2 y los 8 tests del escenario cruzado (camino feliz, rechazo atribuido a A2 y a A3, API caída, payloads enviados, lectura de lo persistido, validaciones locales y 404).
+
+---
+
+## 9. POO-09 — APIs cruzadas
+
+### OpenAPI propio
+
+Con el servicio arrancado en el puerto **8082**:
+
+- `http://localhost:8082/v3/api-docs` (JSON, 16 rutas documentadas)
+- `http://localhost:8082/swagger-ui/index.html`
+
+La dependencia es `springdoc-openapi-starter-webmvc-ui` **3.2.0**. La versión 2.8.6 que circuló en el grupo corresponde a Spring Boot 3.x; con Boot 4.1.1 se mantuvo 3.2.0, verificada arrancando el servicio.
+
+El documento describe el CRUD de armas y jugadores, la simulación con sus dos reglas (`409 CS2_ARMA_SIN_MUNICION` y `422 CS2_ECONOMIA_EXCEDIDA`) y el escenario cruzado con los esquemas `EscenarioRequest`, `EscenarioValidado` y el cuerpo de error `422 CS2_VALIDACION_<A2|A3>_RECHAZADA`.
+
+### Mapa del grupo y puertos
+
+| Rol | Alumno | Base URL | OpenAPI | Regla publicada en una frase |
+|---|---|---|---|---|
+| A1 | César Ramírez (este repo) | `http://localhost:8082` | `http://localhost:8082/v3/api-docs` | El precio del arma debe estar entre $0 y $16.000; ruta real `POST /api/armas` |
+| A2 | Giovanni Monteggia | `http://localhost:8081` | `http://localhost:8081/v3/api-docs` | Munición: un rifle necesita balas para disparar; `POST /api/simulacion/disparar?rifleId={id}&jugadorId={id}&distancia={valor}` responde 409 si no quedan balas |
+| A3 | Luis Tauber | `http://localhost:8080` | `http://localhost:8080/v3/api-docs` | Un arma de fuego necesita munición para disparar y una granada no se puede lanzar dos veces; `POST /simulaciones/combate?armaDeFuegoId={id}&granadaId={id}` |
+
+### Cómo levantar los tres servicios juntos
+
+Cada comando en su propia terminal y carpeta:
+
+```bash
+# Terminal 1 — Luis (A3), puerto default 8080
+cd ltauber-tp-lp3-2026 && ./mvnw spring-boot:run
+
+# Terminal 2 — Giovanni (A2), puerto 8081
+cd SMONTEGGIA-taller-git-2026 && ./mvnw spring-boot:run
+
+# Terminal 3 — César (A1, este repo), puerto 8082
+cd crr-taller-git-2026 && ./mvnw spring-boot:run
+```
+
+Giovanni siembra al arrancar el rifle `108` y el jugador `100` (se configuran con `A2_RIFLE_ID` / `A2_JUGADOR_ID`). En el H2 de Luis hay que crear un `armaDeFuego` y una `granada` con `POST /armas`; sus IDs se pasan por `A3_ARMA_DE_FUEGO_ID` / `A3_GRANADA_ID` (defaults `1` y `2`). Con `distancia=35`, Giovanni devuelve 20 de daño: `{"mensaje":"AK-47 ROUND ROBIN dispara a 35 m y causa 20 de daño.","rifleId":108,"municionRestante":28,"jugadorId":100,"danoRecibido":20,"vidaRestante":60}`.
+
+### Endpoint de escenario
+
+```http
+POST /api/escenarios
+Content-Type: application/json
+
+{
+  "armaId": 1,
+  "jugadorId": 1,
+  "distancia": 35,
+  "headshot": false,
+  "nombreEscenario": "Emboscada en Mirage",
+  "descripcion": "AWP desde ventana"
+}
+```
+
+`EscenarioService` valida los datos locales, llama a A2 y luego a A3, y recién guarda en H2 si **ambos** aceptan. `GET /api/escenarios` y `GET /api/escenarios/{id}` leen lo persistido. Si un compañero rechaza, la base queda igual y la respuesta 422 informa `origen`, `statusExterno` y `cuerpoExterno`; tampoco se llama al segundo compañero si el primero rechaza.
+
+A2 y A3 se llaman con `POST` sin cuerpo y query params. Un 200 sin campo `aprobado` cuenta como aceptación: Giovanni devuelve `mensaje`, `danoRecibido`, etc.; Luis devuelve `danioInfligido`, `balasRestantes`, `granadaLanzada`. Un 409 ajeno se convierte en `422 CS2_VALIDACION_<A2|A3>_RECHAZADA` con `statusExterno = 409` y el cuerpo exacto del compañero (`{"error":"No queda munición en AK-47 VACIO CESAR"}` o `{"error":"La granada con id 2 ya fue lanzada"}`).
+
+### Configuración de los clientes
+
+Las URLs y los paths se leen de `application.properties` y se pueden sobrescribir por variable de entorno:
+
+| Variable | Default | Uso |
+|---|---|---|
+| `A2_BASE_URL` / `A3_BASE_URL` | `http://localhost:8081` / `http://localhost:8080` | Base de cada compañero |
+| `A2_OPENAPI_URL` / `A3_OPENAPI_URL` | `/v3/api-docs` de cada puerto | Documento ajeno consultado |
+| `A2_VALIDACION_PATH` | `/api/simulacion/disparar` | Ruta confirmada por Giovanni |
+| `A3_VALIDACION_PATH` | `/simulaciones/combate` | Ruta confirmada por Luis |
+| `A2_RIFLE_ID` / `A2_JUGADOR_ID` | `108` / `100` | IDs sembrados por Giovanni en su H2 |
+| `A2_DISTANCIA` | `35` | Distancia del disparo si el request local no trae una |
+| `A3_ARMA_DE_FUEGO_ID` / `A3_GRANADA_ID` | `1` / `2` | IDs existentes en el H2 de Luis |
+| `A2_CONNECT_TIMEOUT_MS` / `A3_CONNECT_TIMEOUT_MS` | `2000` | Timeout de conexión |
+| `A2_READ_TIMEOUT_MS` / `A3_READ_TIMEOUT_MS` | `3000` | Timeout de lectura |
+
+### Colección Insomnia base
+
+`insomnia/insomnia_collection_lp3_poo09.json` trae 10 pedidos y 3 respuestas de ejemplo: los tres OpenAPI, la creación del arma y el jugador locales, el escenario feliz, un rechazo de A2 (rifle `AK-47 VACIO CESAR` sin balas), uno de A3 (granada ya lanzada) y los dos `GET` de persistencia. El entorno define `a1_base_url` (8082), `a2_base_url` (8081), `a3_base_url` (8080), las tres URLs de OpenAPI y `escenario_id`.
+
+### Pendiente
+
+- Publicar este working tree: el `pom.xml` local ya tiene springdoc 3.2.0, pero el HEAD público `f7a060b` todavía no lo incluye.
+- Actualizar el enlace al commit final de la solución.

@@ -23,13 +23,26 @@ public abstract class ClienteExterno {
     }
 
     public ValidacionExterna validar(Map<String, Object> payload) {
+        return ejecutar(restClient.post()
+                .uri(propiedades.getValidacionPath())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload));
+    }
+
+    protected ValidacionExterna validarConQuery(Map<String, Object> query) {
+        return ejecutar(restClient.post()
+                .uri(uriBuilder -> {
+                    uriBuilder.path(propiedades.getValidacionPath());
+                    query.forEach((key, value) -> uriBuilder.queryParam(key, value));
+                    return uriBuilder.build();
+                }));
+    }
+
+    private ValidacionExterna ejecutar(RestClient.RequestBodySpec request) {
         try {
-            ValidacionExterna respuesta = restClient.post()
-                    .uri(propiedades.getValidacionPath())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(payload)
+            ValidacionExterna respuesta = request
                     .retrieve()
-                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                    .onStatus(HttpStatusCode::isError, (req, response) -> {
                         String cuerpo = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
                         throw new ValidacionExternaRechazadaException(origen, response.getStatusCode().value(), cuerpo);
                     })

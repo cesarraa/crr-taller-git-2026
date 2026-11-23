@@ -40,6 +40,8 @@ public class IndexController {
         endpoints.put("crudRecargar", "POST /api/armas/{id}/recargar");
         endpoints.put("simulacionCombate", "POST /api/simulacion/combate?distancia={m}&headshot={bool}");
         endpoints.put("simulacionEstado", "GET /api/simulacion/estado");
+        endpoints.put("escenarioEjecutar", "POST /api/escenarios (valida con A2 y A3, persiste solo si ambos aceptan)");
+        endpoints.put("escenarioListar", "GET /api/escenarios y GET /api/escenarios/{id}");
         endpoints.put("jugadoresListar", "GET /api/jugadores");
         endpoints.put("uiElementos", "GET /ui/elementos (Interfaz UICapable polimórfica)");
         endpoints.put("uiRenderizar", "GET /ui/renderizar?tipo={francotirador|jugador}");

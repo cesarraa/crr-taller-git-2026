@@ -29,6 +29,29 @@ public class ApiExternasProperties {
         private String baseUrl;
         private String openApiUrl;
         private String validacionPath;
+        private Long rifleId = 108L;
+        private Long jugadorId = 100L;
+        private Integer distancia = 35;
+        private Long armaDeFuegoId = 1L;
+        private Long granadaId = 2L;
+        private long connectTimeoutMs = 2000;
+        private long readTimeoutMs = 3000;
+
+        public long getConnectTimeoutMs() {
+            return connectTimeoutMs;
+        }
+
+        public void setConnectTimeoutMs(long connectTimeoutMs) {
+            this.connectTimeoutMs = connectTimeoutMs;
+        }
+
+        public long getReadTimeoutMs() {
+            return readTimeoutMs;
+        }
+
+        public void setReadTimeoutMs(long readTimeoutMs) {
+            this.readTimeoutMs = readTimeoutMs;
+        }
 
         public String getBaseUrl() {
             return baseUrl;
@@ -52,6 +75,46 @@ public class ApiExternasProperties {
 
         public void setValidacionPath(String validacionPath) {
             this.validacionPath = validacionPath;
+        }
+
+        public Long getRifleId() {
+            return rifleId;
+        }
+
+        public void setRifleId(Long rifleId) {
+            this.rifleId = rifleId;
+        }
+
+        public Long getJugadorId() {
+            return jugadorId;
+        }
+
+        public void setJugadorId(Long jugadorId) {
+            this.jugadorId = jugadorId;
+        }
+
+        public Integer getDistancia() {
+            return distancia;
+        }
+
+        public void setDistancia(Integer distancia) {
+            this.distancia = distancia;
+        }
+
+        public Long getArmaDeFuegoId() {
+            return armaDeFuegoId;
+        }
+
+        public void setArmaDeFuegoId(Long armaDeFuegoId) {
+            this.armaDeFuegoId = armaDeFuegoId;
+        }
+
+        public Long getGranadaId() {
+            return granadaId;
+        }
+
+        public void setGranadaId(Long granadaId) {
+            this.granadaId = granadaId;
         }
     }
 }

@@ -7,18 +7,48 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class ValidacionExterna {
 
     @JsonAlias({"approved", "valido", "valida"})
-    private boolean aprobado;
+    private Boolean aprobado;
 
     private String mensaje;
 
     private String codigo;
 
+    private Integer danioInfligido;
+
+    private Integer balasRestantes;
+
+    private Boolean granadaLanzada;
+
     public boolean isAprobado() {
-        return aprobado;
+        return !Boolean.FALSE.equals(aprobado);
     }
 
     public void setAprobado(boolean aprobado) {
         this.aprobado = aprobado;
+    }
+
+    public Integer getDanioInfligido() {
+        return danioInfligido;
+    }
+
+    public void setDanioInfligido(Integer danioInfligido) {
+        this.danioInfligido = danioInfligido;
+    }
+
+    public Integer getBalasRestantes() {
+        return balasRestantes;
+    }
+
+    public void setBalasRestantes(Integer balasRestantes) {
+        this.balasRestantes = balasRestantes;
+    }
+
+    public Boolean getGranadaLanzada() {
+        return granadaLanzada;
+    }
+
+    public void setGranadaLanzada(Boolean granadaLanzada) {
+        this.granadaLanzada = granadaLanzada;
     }
 
     public String getMensaje() {

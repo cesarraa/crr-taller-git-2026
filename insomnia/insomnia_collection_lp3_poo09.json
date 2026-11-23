@@ -1,0 +1,327 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-22T03:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_lp3_cs2_poo09",
+      "parentId": null,
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "name": "LP3 - POO-09 APIs cruzadas CS2",
+      "description": "POO-09: A1 César en 8082 (economía), A2 Giovanni en 8081 (munición: rifle 108 / jugador 100), A3 Luis en 8080 (munición y granada). Incluye OpenAPI, datos locales, escenario feliz, un rechazo por compañero y respuestas de ejemplo guardadas.",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_lp3_cs2_poo09_base",
+      "parentId": "wrk_lp3_cs2_poo09",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "name": "Base Environment",
+      "data": {
+        "a1_base_url": "http://localhost:8082",
+        "a2_base_url": "http://localhost:8081",
+        "a3_base_url": "http://localhost:8080",
+        "a1_openapi_url": "http://localhost:8082/v3/api-docs",
+        "a2_openapi_url": "http://localhost:8081/v3/api-docs",
+        "a3_openapi_url": "http://localhost:8080/v3/api-docs",
+        "escenario_id": "1"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "a1_base_url",
+          "a2_base_url",
+          "a3_base_url",
+          "a1_openapi_url",
+          "a2_openapi_url",
+          "a3_openapi_url",
+          "escenario_id"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1698510000000,
+      "_type": "environment"
+    },
+    {
+      "_id": "fld_poo09_01_openapi",
+      "parentId": "wrk_lp3_cs2_poo09",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "name": "01. Documentos OpenAPI",
+      "description": "Primero se leen los tres documentos: el propio y los de los dos compañeros.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_poo09_01_a1_openapi",
+      "parentId": "fld_poo09_01_openapi",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a1_openapi_url }}",
+      "name": "01 - GET OpenAPI de A1 (propio)",
+      "description": "Describe CRUD, simulación, las dos reglas propias y el endpoint de escenarios.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -100,
+      "_type": "request"
+    },
+    {
+      "_id": "req_poo09_02_a2_openapi",
+      "parentId": "fld_poo09_01_openapi",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a2_openapi_url }}",
+      "name": "02 - GET OpenAPI de A2",
+      "description": "OpenAPI de Giovanni (A2) en 8081. Su regla es POST /api/simulacion/disparar?rifleId=108&jugadorId=100&distancia=35: 200 con mensaje/daño o 409 si no quedan balas.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -90,
+      "_type": "request"
+    },
+    {
+      "_id": "req_poo09_03_a3_openapi",
+      "parentId": "fld_poo09_01_openapi",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a3_openapi_url }}",
+      "name": "03 - GET OpenAPI de A3",
+      "description": "OpenAPI de Luis (A3) en 8080. Su regla es POST /simulaciones/combate?armaDeFuegoId={id}&granadaId={id}: 200 con daño/balas/granada o 409 si la granada ya fue lanzada.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -80,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_poo09_02_datos",
+      "parentId": "wrk_lp3_cs2_poo09",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "name": "02. Datos locales para el escenario",
+      "description": "Crear un arma y un jugador en el H2 de A1 para usar sus IDs en el escenario.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_poo09_04_arma",
+      "parentId": "fld_poo09_02_datos",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a1_base_url }}/api/armas",
+      "name": "04 - POST /api/armas (AWP)",
+      "description": "Prepara el arma local. Tomar el id devuelto para el campo armaId.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tipo\": \"FRANCOTIRADOR\",\n  \"nombre\": \"AWP Escenario POO-09\",\n  \"precio\": 4750,\n  \"dano\": 115,\n  \"peso\": 6.5,\n  \"municionMax\": 10,\n  \"zoom\": 8\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -70,
+      "_type": "request"
+    },
+    {
+      "_id": "req_poo09_05_jugador",
+      "parentId": "fld_poo09_02_datos",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a1_base_url }}/api/jugadores",
+      "name": "05 - POST /api/jugadores",
+      "description": "Prepara el jugador local. Tomar el id devuelto para el campo jugadorId.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"alias\": \"escenario9\",\n  \"bando\": \"Counter-Terrorista\",\n  \"salud\": 100,\n  \"dinero\": 16000\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -60,
+      "_type": "request"
+    },
+    {
+      "_id": "fld_poo09_03_escenario",
+      "parentId": "wrk_lp3_cs2_poo09",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "name": "03. Escenario cruzado en A1",
+      "description": "A1 consulta A2 y A3; el cliente solo habla con A1.",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_poo09_06_feliz",
+      "parentId": "fld_poo09_03_escenario",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a1_base_url }}/api/escenarios",
+      "name": "06 - POST /api/escenarios (camino feliz)",
+      "description": "Ajustar armaId y jugadorId con los ids creados. Esperar 201 y luego ejecutar el GET 09.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"armaId\": 1,\n  \"jugadorId\": 1,\n  \"distancia\": 35,\n  \"headshot\": false,\n  \"nombreEscenario\": \"Emboscada en Mirage\",\n  \"descripcion\": \"AWP desde ventana con validación de A2 y A3\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -50,
+      "_type": "request"
+    },
+    {
+      "_id": "req_poo09_07_rechazo_a2",
+      "parentId": "fld_poo09_03_escenario",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a1_base_url }}/api/escenarios",
+      "name": "07 - POST /api/escenarios (rechazo de A2)",
+      "description": "En Giovanni crear el rifle {tipo:rifle,nombre:AK-47 VACIO CESAR,precio:2700,dano:36,cargador:1}, disparar una vez con ese id y repetir. A2 responde 409 y A1 debe devolver 422 CS2_VALIDACION_A2_RECHAZADA con statusExterno 409; la base no debe crecer.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"armaId\": 1,\n  \"jugadorId\": 1,\n  \"distancia\": 35,\n  \"headshot\": false,\n  \"nombreEscenario\": \"Rechazo A2\",\n  \"descripcion\": \"Ajustar segun la regla publicada por A2\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -40,
+      "_type": "request"
+    },
+    {
+      "_id": "req_poo09_08_rechazo_a3",
+      "parentId": "fld_poo09_03_escenario",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a1_base_url }}/api/escenarios",
+      "name": "08 - POST /api/escenarios (rechazo de A3)",
+      "description": "Primero correr el pedido 06 una vez: eso consume la granada 2 en el H2 de Luis. Repetir este pedido para que A3 responda 409 y A1 devuelva 422 CS2_VALIDACION_A3_RECHAZADA con statusExterno 409; la base no debe crecer.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"armaId\": 1,\n  \"jugadorId\": 1,\n  \"distancia\": 35,\n  \"headshot\": false,\n  \"nombreEscenario\": \"Rechazo A3\",\n  \"descripcion\": \"Ajustar segun la regla publicada por A3\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -30,
+      "_type": "request"
+    },
+    {
+      "_id": "req_poo09_09_listar",
+      "parentId": "fld_poo09_03_escenario",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a1_base_url }}/api/escenarios",
+      "name": "09 - GET /api/escenarios (persistencia)",
+      "description": "Después del camino feliz, comprueba que la jugada quedó guardada en el H2 de A1.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -20,
+      "_type": "request"
+    },
+    {
+      "_id": "req_poo09_10_buscar",
+      "parentId": "fld_poo09_03_escenario",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "url": "{{ _.a1_base_url }}/api/escenarios/{{ _.escenario_id }}",
+      "name": "10 - GET /api/escenarios/{id}",
+      "description": "Lee una jugada persistida por su id; un id inexistente responde 404 CS2_NOT_FOUND.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -10,
+      "_type": "request"
+    },
+    {
+      "_id": "res_poo09_06_feliz",
+      "parentId": "req_poo09_06_feliz",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "name": "201 - Escenario aceptado por A2 y A3",
+      "status": 201,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": "{\n  \"id\": 1,\n  \"nombreEscenario\": \"Emboscada en Mirage\",\n  \"descripcion\": \"AWP desde ventana con validación de A2 y A3\",\n  \"armaNombre\": \"AWP\",\n  \"jugadorAlias\": \"feliz\",\n  \"distancia\": 35,\n  \"headshot\": false,\n  \"resultadoA2\": \"AK-47 ROUND ROBIN dispara a 35 m y causa 20 de daño.\",\n  \"resultadoA3\": \"daño 19, balas restantes 11, granada lanzada true\",\n  \"registradoEn\": \"2026-11-23T03:44:12.123456\"\n}",
+      "encoding": "utf-8",
+      "_type": "response"
+    },
+    {
+      "_id": "res_poo09_07_rechazo_a2",
+      "parentId": "req_poo09_07_rechazo_a2",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "name": "422 - Rechazo de Giovanni (A2)",
+      "status": 422,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": "{\n  \"timestamp\": \"2026-11-23T03:44:12.401750028\",\n  \"status\": 422,\n  \"error\": \"Validación externa rechazada\",\n  \"tipoExcepcion\": \"ValidacionExternaRechazadaException\",\n  \"codigo\": \"CS2_VALIDACION_A2_RECHAZADA\",\n  \"origen\": \"A2\",\n  \"statusExterno\": 409,\n  \"cuerpoExterno\": \"{\\\"error\\\":\\\"No queda munición en AK-47 VACIO CESAR\\\"}\",\n  \"mensaje\": \"La validación externa A2 rechazó el escenario con estado 409\"\n}",
+      "encoding": "utf-8",
+      "_type": "response"
+    },
+    {
+      "_id": "res_poo09_08_rechazo_a3",
+      "parentId": "req_poo09_08_rechazo_a3",
+      "modified": 1698510000000,
+      "created": 1698510000000,
+      "name": "422 - Rechazo de Luis (A3), granada ya lanzada",
+      "status": 422,
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": "{\n  \"timestamp\": \"2026-11-23T03:44:12.401750028\",\n  \"status\": 422,\n  \"error\": \"Validación externa rechazada\",\n  \"tipoExcepcion\": \"ValidacionExternaRechazadaException\",\n  \"codigo\": \"CS2_VALIDACION_A3_RECHAZADA\",\n  \"origen\": \"A3\",\n  \"statusExterno\": 409,\n  \"cuerpoExterno\": \"{\\\"error\\\":\\\"La granada con id 2 ya fue lanzada\\\"}\",\n  \"mensaje\": \"La validación externa A3 rechazó el escenario con estado 409\"\n}",
+      "encoding": "utf-8",
+      "_type": "response"
+    }
+  ]
+}
