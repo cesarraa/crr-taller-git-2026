@@ -165,3 +165,11 @@
 4. **Verificación:**
    - `./mvnw test`: 32 de 32 pruebas aprobadas.
    - Giovanni verificó los tres servicios juntos desde su lado: camino feliz 201 con ambas aceptaciones, rechazo de A1 con `codigoHttpCompanero: 422` y rechazo de Luis con `codigoHttpCompanero: 200`, sin jugadas guardadas en los rechazos.
+
+---
+
+## 9. Sesión 8: publicación
+
+1. **Consigna:** publicar la solución POO-09 y pasar el hash a Giovanni para que repita la prueba de `/v3/api-docs` y cierre su nota del 404.
+2. **Cambios realizados:** commit `a4e881172645a27915260219fda023e78b2ea65f` con la solución y commit posterior actualizando README, especificaciones y esta bitácora con el enlace.
+3. **Verificación:** `./mvnw test` 32/32 antes de publicar; rama `poo09-apis-cruzadas` enviada a `origin` con `git push -u origin poo09-apis-cruzadas`.

@@ -42,4 +42,4 @@ Las URLs, paths y timeouts se definen en `application.properties` y se sobrescri
 
 - Parte local terminada: arranque en 8082, endpoint de escenario, OpenAPI propio, 32 tests, README, bitácora y colección de Insomnia con 10 pedidos y 3 respuestas de ejemplo.
 - A2 (Giovanni) y A3 (Luis) integrados con sus contratos reales de query params y sus respuestas 200/409.
-- Pendiente: publicar el working tree (el HEAD público `f7a060b` todavía no trae springdoc) y actualizar el enlace al commit final.
+- Commit de la solución: https://github.com/cesarraa/crr-taller-git-2026/commit/a4e881172645a27915260219fda023e78b2ea65f

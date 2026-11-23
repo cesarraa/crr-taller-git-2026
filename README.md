@@ -435,7 +435,7 @@ Las URLs y los paths se leen de `application.properties` y se pueden sobrescribi
 
 `insomnia/insomnia_collection_lp3_poo09.json` trae 10 pedidos y 3 respuestas de ejemplo: los tres OpenAPI, la creación del arma y el jugador locales, el escenario feliz, un rechazo de A2 (rifle `AK-47 VACIO CESAR` sin balas), uno de A3 (granada ya lanzada) y los dos `GET` de persistencia. El entorno define `a1_base_url` (8082), `a2_base_url` (8081), `a3_base_url` (8080), las tres URLs de OpenAPI y `escenario_id`.
 
-### Pendiente
+### Entrega
 
-- Publicar este working tree: el `pom.xml` local ya tiene springdoc 3.2.0, pero el HEAD público `f7a060b` todavía no lo incluye.
-- Actualizar el enlace al commit final de la solución.
+- Commit de la solución POO-09: https://github.com/cesarraa/crr-taller-git-2026/commit/a4e881172645a27915260219fda023e78b2ea65f
+- El `pom.xml` incluye `springdoc-openapi-starter-webmvc-ui` 3.2.0 y el OpenAPI propio responde 200 en `http://localhost:8082/v3/api-docs`.
