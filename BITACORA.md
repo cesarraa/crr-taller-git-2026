@@ -181,3 +181,12 @@
 1. **Consigna:** Luis avisó que `/simulaciones/combate?armaDeFuegoId=...&granadaId=...` depende de IDs sembrados en su H2 en memoria y recomendó usar `/api/reglas/combate`; Giovanni también publicó `/api/reglas/disparo`.
 2. **Cambios realizados:** `ValidacionExterna` acepta el alias `aceptada`; `ClienteA2` envía JSON a `/api/reglas/disparo`; `ClienteA3` envía JSON a `/api/reglas/combate`; se eliminaron los IDs configurables y se actualizaron properties, tests, README, especificaciones, Insomnia y ejemplos del OpenAPI. Commit `24921ac4bd3c9dd8db183c60b5daf5c778375a22`.
 3. **Verificación:** `./mvnw test` 33/33 y JSON de Insomnia válido; rama `poo09-apis-cruzadas` enviada a `origin` con `git push`.
+
+---
+
+## 11. Sesión 10: verificación final con servicios reales
+
+1. **Consigna:** Luis clonó este repo en `24921ac4bd3c9dd8db183c60b5daf5c778375a22` y el de Giovanni, corrió los tres servicios juntos en su máquina y reportó el resultado de su escenario `POST /escenarios/comprar-y-disparar`.
+2. **Hallazgo:** los mocks de Luis no enviaban el campo `peso`; la validación real de A1 exige `peso > 0` y respondía “El peso del arma debe ser mayor a cero kg.” Luis agregó el campo a su body y el falso rechazo desapareció. No hubo cambios de código de este lado.
+3. **Resultado verificado:** caso feliz 201 con persistencia; rechazo por economía de A1 con el mensaje de `CS2_ECONOMIA_EXCEDIDA`; rechazo por munición de Giovanni 409. Todo con A1, A2 y A3 reales corriendo simultáneamente.
+4. **Estado:** entrega cerrada en el commit `24921ac4bd3c9dd8db183c60b5daf5c778375a22`, con la documentación del hash en `5676595d68097b73219854a05526c038fc31de9b`; rama `poo09-apis-cruzadas` actualizada en `origin`.
