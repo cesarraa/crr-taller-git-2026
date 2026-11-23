@@ -2,7 +2,7 @@
 
 **Alumno:** César Ramírez Román (`cesarraa`)  
 **Repositorio:** `https://github.com/cesarraa/crr-taller-git-2026`  
-**Rama de trabajo:** `poo09-apis-cruzadas`  
+**Rama de trabajo:** `main` (desarrollo en `poo09-apis-cruzadas`, ya integrado)
 **Enunciado:** `ejercicio-poo-09-apis-cruzadas-2026-11-16`
 
 ---
@@ -42,5 +42,6 @@ Las URLs, paths y timeouts se definen en `application.properties` y se sobrescri
 
 - Parte local terminada: arranque en 8082, endpoint de escenario, OpenAPI propio, 33 tests, README, bitácora y colección de Insomnia con 10 pedidos y 3 respuestas de ejemplo.
 - A2 (Giovanni) y A3 (Luis) integrados con sus contratos stateless `/api/reglas` y sus respuestas 200/400 con `aceptada`.
-- Commit de la solución: https://github.com/cesarraa/crr-taller-git-2026/commit/a4e881172645a27915260219fda023e78b2ea65f
-- Commit de la migración a contratos stateless: https://github.com/cesarraa/crr-taller-git-2026/commit/24921ac4bd3c9dd8db183c60b5daf5c778375a22
+- Commit de la solución (código final verificado por los tres integrantes): https://github.com/cesarraa/crr-taller-git-2026/commit/24921ac4bd3c9dd8db183c60b5daf5c778375a22
+- Commit inicial de la solución POO-09: https://github.com/cesarraa/crr-taller-git-2026/commit/a4e881172645a27915260219fda023e78b2ea65f
+- Commit de documentación: https://github.com/cesarraa/crr-taller-git-2026/commit/376ea13ef07979e458d3f766206efc655b967cc0

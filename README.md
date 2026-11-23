@@ -7,8 +7,12 @@ Licencia: **Apache License 2.0** (ver archivo [LICENSE](LICENSE)).
 
 ---
 
-## Enlace al Commit de la Solución (POO-08 y su corrección)
+## Enlace al Commit de la Solución (POO-08, su corrección y POO-09)
 
+**Situación POO-08:** puntaje completo; todas las observaciones de la corrección están cerradas en la tabla siguiente.
+
+- **Commit de la solución POO-09 (código final verificado por los tres integrantes):** https://github.com/cesarraa/crr-taller-git-2026/commit/24921ac4bd3c9dd8db183c60b5daf5c778375a22
+- **Commit de documentación POO-09:** https://github.com/cesarraa/crr-taller-git-2026/commit/376ea13ef07979e458d3f766206efc655b967cc0
 - **Commit de la corrección POO-08:** https://github.com/cesarraa/crr-taller-git-2026/commit/7dbde7152778ff124b268bcd5ba0596a0d8ac2d1
 - **Commit original de la entrega POO-08:** https://github.com/cesarraa/crr-taller-git-2026/commit/3e361a4c9d3f3d5ebb1ba7ad69a7e85854c2d0d7
 - **Commit previo POO-07 (Interfaces):** https://github.com/cesarraa/crr-taller-git-2026/commit/4d0095d
