@@ -43,3 +43,4 @@ Las URLs, paths y timeouts se definen en `application.properties` y se sobrescri
 - Parte local terminada: arranque en 8082, endpoint de escenario, OpenAPI propio, 33 tests, README, bitácora y colección de Insomnia con 10 pedidos y 3 respuestas de ejemplo.
 - A2 (Giovanni) y A3 (Luis) integrados con sus contratos stateless `/api/reglas` y sus respuestas 200/400 con `aceptada`.
 - Commit de la solución: https://github.com/cesarraa/crr-taller-git-2026/commit/a4e881172645a27915260219fda023e78b2ea65f
+- Commit de la migración a contratos stateless: https://github.com/cesarraa/crr-taller-git-2026/commit/24921ac4bd3c9dd8db183c60b5daf5c778375a22

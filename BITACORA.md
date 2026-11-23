@@ -173,3 +173,11 @@
 1. **Consigna:** publicar la solución POO-09 y pasar el hash a Giovanni para que repita la prueba de `/v3/api-docs` y cierre su nota del 404.
 2. **Cambios realizados:** commit `a4e881172645a27915260219fda023e78b2ea65f` con la solución y commit posterior actualizando README, especificaciones y esta bitácora con el enlace.
 3. **Verificación:** `./mvnw test` 32/32 antes de publicar; rama `poo09-apis-cruzadas` enviada a `origin` con `git push -u origin poo09-apis-cruzadas`.
+
+---
+
+## 10. Sesión 9: contratos stateless de A2 y A3
+
+1. **Consigna:** Luis avisó que `/simulaciones/combate?armaDeFuegoId=...&granadaId=...` depende de IDs sembrados en su H2 en memoria y recomendó usar `/api/reglas/combate`; Giovanni también publicó `/api/reglas/disparo`.
+2. **Cambios realizados:** `ValidacionExterna` acepta el alias `aceptada`; `ClienteA2` envía JSON a `/api/reglas/disparo`; `ClienteA3` envía JSON a `/api/reglas/combate`; se eliminaron los IDs configurables y se actualizaron properties, tests, README, especificaciones, Insomnia y ejemplos del OpenAPI. Commit `24921ac4bd3c9dd8db183c60b5daf5c778375a22`.
+3. **Verificación:** `./mvnw test` 33/33 y JSON de Insomnia válido; rama `poo09-apis-cruzadas` enviada a `origin` con `git push`.

@@ -438,4 +438,5 @@ Las URLs y los paths se leen de `application.properties` y se pueden sobrescribi
 ### Entrega
 
 - Commit de la solución POO-09: https://github.com/cesarraa/crr-taller-git-2026/commit/a4e881172645a27915260219fda023e78b2ea65f
+- Commit de la migración a contratos stateless `/api/reglas`: https://github.com/cesarraa/crr-taller-git-2026/commit/24921ac4bd3c9dd8db183c60b5daf5c778375a22
 - El `pom.xml` incluye `springdoc-openapi-starter-webmvc-ui` 3.2.0 y el OpenAPI propio responde 200 en `http://localhost:8082/v3/api-docs`.
